@@ -1,0 +1,21 @@
+{
+  "name": "agentle-ui-monorepo",
+  "private": true,
+  "author": "edvardhov",
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "dev": "pnpm --filter @agentle-ui/www dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "eslint": "^9.28.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.1"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@agentle-ui/registry",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Component templates for agentle-ui CLI",
+  "author": "edvardhov",
+  "license": "MIT"
+}
