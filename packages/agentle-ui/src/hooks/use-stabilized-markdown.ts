@@ -12,6 +12,8 @@ export interface UseStabilizedMarkdownOptions {
   debounceMs?: number;
   flushOnComplete?: boolean;
   onBlockRendered?: (block: MarkdownBlock) => void;
+  /** When using string input, set false while tokens are still arriving. Default: true */
+  isComplete?: boolean;
 }
 
 export interface StabilizedMarkdownState {
@@ -39,7 +41,7 @@ export function useStabilizedMarkdown(
   input: StreamInput,
   options: UseStabilizedMarkdownOptions = {},
 ): StabilizedMarkdownState {
-  const { debounceMs = 16, flushOnComplete = true, onBlockRendered } = options;
+  const { debounceMs = 16, flushOnComplete = true, onBlockRendered, isComplete = true } = options;
   const onBlockRenderedRef = useRef(onBlockRendered);
   onBlockRenderedRef.current = onBlockRendered;
 
@@ -71,7 +73,6 @@ export function useStabilizedMarkdown(
     const store = storeRef.current!;
     const currentInput = inputRef.current;
 
-    parser.reset();
     let buffer = "";
     let streamDone = false;
     const seenRenderedIds = new Set<string>();
@@ -106,11 +107,13 @@ export function useStabilizedMarkdown(
     };
 
     if (typeof currentInput === "string") {
+      parser.reset();
       buffer = currentInput;
-      commit(true);
+      commit(isComplete);
       return;
     }
 
+    parser.reset();
     store.update({
       renderedBlocks: [],
       pendingBlocks: [],
@@ -127,7 +130,7 @@ export function useStabilizedMarkdown(
     return () => {
       unsubscribe();
     };
-  }, [inputKey, flushOnComplete]);
+  }, [inputKey, flushOnComplete, isComplete]);
 
   useEffect(() => {
     return () => {

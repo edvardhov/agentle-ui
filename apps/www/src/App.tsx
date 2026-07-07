@@ -7,9 +7,8 @@ import "./styles.css";
 
 export default function App() {
   const [content, setContent] = useState("");
-  const [stream, setStream] = useState<AsyncIterable<string> | null>(null);
-  const [runId, setRunId] = useState(0);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [runId, setRunId] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   const naiveShifts = useLayoutShiftCounter(isStreaming);
@@ -24,20 +23,19 @@ export default function App() {
     setIsStreaming(true);
     setRunId((id) => id + 1);
 
-    async function* run() {
+    void (async () => {
       try {
         for await (const chunk of simulateTokenStream(DEMO_MARKDOWN, controller.signal)) {
           setContent((prev) => prev + chunk);
-          yield chunk;
         }
+      } catch {
+        // Aborted — expected on replay/unmount.
       } finally {
         if (!controller.signal.aborted) {
           setIsStreaming(false);
         }
       }
-    }
-
-    setStream(run());
+    })();
   }, []);
 
   useEffect(() => {
@@ -65,7 +63,7 @@ export default function App() {
             <h2>Naive render</h2>
             <p className="metric">Layout shifts: {naiveShifts}</p>
           </header>
-          <NaiveMarkdown content={content} />
+          <NaiveMarkdown content={content} isStreaming={isStreaming} />
         </article>
 
         <article className="pane">
@@ -73,7 +71,7 @@ export default function App() {
             <h2>agentle-ui</h2>
             <p className="metric metric--good">Layout shifts: {gentleShifts}</p>
           </header>
-          {stream ? <GentleMarkdown content={stream} /> : null}
+          <GentleMarkdown content={content} isComplete={!isStreaming} />
         </article>
       </section>
     </div>
