@@ -1,0 +1,24 @@
+{
+  "name": "markdown-stabilizer",
+  "type": "registry:component",
+  "description": "Safely buffers incoming AI markdown and renders complete blocks only",
+  "dependencies": ["agentle-ui", "react-markdown", "remark-gfm"],
+  "files": [
+    {
+      "name": "markdown-stabilizer.tsx",
+      "target": "components/agentle/markdown-stabilizer.tsx"
+    },
+    {
+      "name": "block-renderer.tsx",
+      "target": "components/agentle/block-renderer.tsx"
+    },
+    {
+      "name": "block-skeleton.tsx",
+      "target": "components/agentle/block-skeleton.tsx"
+    },
+    {
+      "name": "agentle.css",
+      "target": "components/agentle/agentle.css"
+    }
+  ]
+}

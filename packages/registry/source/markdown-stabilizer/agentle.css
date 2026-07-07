@@ -1,0 +1,117 @@
+:root {
+  --agentle-font: system-ui, -apple-system, sans-serif;
+  --agentle-font-mono: ui-monospace, "Cascadia Code", monospace;
+  --agentle-radius: 0.5rem;
+  --agentle-spacing: 0.25rem;
+
+  --agentle-bg: #fafafa;
+  --agentle-bg-subtle: #f4f4f5;
+  --agentle-text: #18181b;
+  --agentle-text-muted: #71717a;
+  --agentle-border: #e4e4e7;
+  --agentle-accent: #6366f1;
+  --agentle-success: #22c55e;
+  --agentle-error: #ef4444;
+
+  --agentle-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --agentle-duration: 200ms;
+  --agentle-duration-slow: 400ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --agentle-duration: 0ms;
+    --agentle-duration-slow: 0ms;
+  }
+}
+
+.agentle-markdown {
+  font-family: var(--agentle-font);
+  color: var(--agentle-text);
+  line-height: 1.7;
+  font-size: 0.95rem;
+}
+
+.agentle-markdown[data-streaming="true"] {
+  transition: opacity var(--agentle-duration) var(--agentle-ease);
+}
+
+.agentle-markdown h1,
+.agentle-markdown h2,
+.agentle-markdown h3 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 1.25em 0 0.5em;
+}
+
+.agentle-markdown pre {
+  background: var(--agentle-bg-subtle);
+  border: 1px solid var(--agentle-border);
+  border-radius: var(--agentle-radius);
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: var(--agentle-font-mono);
+  font-size: 0.85rem;
+}
+
+.agentle-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.agentle-markdown th,
+.agentle-markdown td {
+  border: 1px solid var(--agentle-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.agentle-markdown blockquote {
+  border-left: 3px solid var(--agentle-accent);
+  margin: 1rem 0;
+  padding: 0.25rem 0 0.25rem 1rem;
+  color: var(--agentle-text-muted);
+}
+
+.agentle-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--agentle-bg-subtle) 25%,
+    #ececef 50%,
+    var(--agentle-bg-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: agentle-shimmer 1.5s var(--agentle-ease) infinite;
+  border-radius: var(--agentle-radius);
+  min-height: 1.25rem;
+  margin: 0.5rem 0;
+}
+
+.agentle-skeleton--code {
+  min-height: 6rem;
+}
+
+.agentle-skeleton--table {
+  min-height: 4rem;
+}
+
+.agentle-skeleton--heading {
+  min-height: 1.75rem;
+  width: 40%;
+}
+
+@keyframes agentle-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agentle-skeleton {
+    animation: none;
+  }
+}
