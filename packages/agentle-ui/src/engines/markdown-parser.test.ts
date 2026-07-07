@@ -40,6 +40,23 @@ describe("MarkdownCompletenessParser", () => {
     expect(blocks.some((b) => b.type === "list")).toBe(true);
   });
 
+  it("renders a complete list after a trailing blank line while stream is active", () => {
+    const parser = new MarkdownCompletenessParser();
+    const text = "> quote\n\n- Zero layout shift\n- Works with any backend\n- No vendor lock-in\n\n---";
+    const blocks = parser.parse(text, false);
+    const { renderedBlocks, pendingBlocks } = partitionBlocks(blocks);
+
+    expect(renderedBlocks.some((b) => b.type === "list" && b.status === "complete")).toBe(true);
+    expect(pendingBlocks.some((b) => b.type === "list")).toBe(false);
+  });
+
+  it("keeps a partial list item in pending until the stream ends", () => {
+    const parser = new MarkdownCompletenessParser();
+    const partial = parser.parse("> quote\n\n- Zero layout shift\n- Works with any");
+    const { pendingBlocks } = partitionBlocks(partial);
+    expect(pendingBlocks.some((b) => b.type === "list")).toBe(true);
+  });
+
   it("flushes incomplete blocks when stream completes", () => {
     const parser = new MarkdownCompletenessParser();
     const partial = parser.parse("```js\nconsole.log('hi')");

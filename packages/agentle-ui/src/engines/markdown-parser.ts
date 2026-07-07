@@ -140,10 +140,6 @@ function inferStatus(type: MarkdownBlockType, content: string): BlockStatus {
   }
 
   if (type === "list") {
-    const lines = content.split("\n");
-    const lastLine = lines[lines.length - 1] ?? "";
-    if (/^\s*$/.test(lastLine)) return "complete";
-    if (/^(\s*)([-*+]|\d+\.)\s/.test(lastLine)) return "incomplete";
     return "complete";
   }
 
@@ -283,7 +279,9 @@ function parseList(
   }
 
   const content = collected.join("\n");
-  const status: BlockStatus = streamComplete ? "complete" : inferStatus("list", content);
+  // Complete when followed by a blank line / next block, or when the stream has ended.
+  const atEndOfDocument = index >= lines.length;
+  const status: BlockStatus = streamComplete || !atEndOfDocument ? "complete" : "incomplete";
 
   return {
     block: createBlock("list", content, startOffset, offset - 1, status),
