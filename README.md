@@ -45,18 +45,18 @@ import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
 
 ## Pillars
 
-| Component | Status | Description |
-| --- | --- | --- |
-| Markdown Stabilizer | v0.1 | Buffers incomplete markdown blocks to prevent layout shift |
-| Thought Visualizer | planned | Shows what the agent is doing instead of a spinner |
-| Action Card | planned | Transparent tool-call UI for agentic actions |
-| Prompt Surface | planned | Multi-line input with attachments and slash commands |
+| Component           | Status  | Description                                                |
+| ------------------- | ------- | ---------------------------------------------------------- |
+| Markdown Stabilizer | v0.1    | Buffers incomplete markdown blocks to prevent layout shift |
+| Thought Visualizer  | planned | Shows what the agent is doing instead of a spinner         |
+| Action Card         | planned | Transparent tool-call UI for agentic actions               |
+| Prompt Surface      | planned | Multi-line input with attachments and slash commands       |
 
-## Why not assistant-ui?
+## Works with what you already use
 
-They solve **build a chat app**. `agentle-ui` solves **make any AI output feel calm**.
+Building on [assistant-ui](https://github.com/assistant-ui/assistant-ui), the Vercel AI SDK, LangGraph, or your own SSE pipeline? `agentle-ui` handles the presentation layer — stable markdown, visible agent activity, tool transparency, and prompt input.
 
-Use assistant-ui, Vercel AI SDK, LangGraph, or raw SSE — then pipe the text into `agentle-ui`. No adapters. No vendor peers beyond React.
+Use it wherever you already render model output. Pass strings or streams into the hooks or copy the styled templates. React is the only peer dependency.
 
 ## Bundle size
 
