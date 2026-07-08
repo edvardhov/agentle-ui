@@ -1,79 +1,30 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { GentleMarkdown } from "./components/gentle-markdown";
-import { NaiveMarkdown } from "./components/naive-markdown";
-import { useLayoutShiftCounter } from "./hooks/use-layout-shift-counter";
-import { DEMO_MARKDOWN, simulateTokenStream } from "./lib/stream-simulator";
+import { Route, Routes } from "react-router-dom";
+import { DocLayout } from "./components/docs/doc-layout";
+import { ActionCardPage } from "./docs/action-card";
+import { ApiReferencePage } from "./docs/api-reference";
+import { CliPage } from "./docs/cli";
+import { ConceptsPage } from "./docs/concepts";
+import { GettingStartedPage } from "./docs/getting-started";
+import { HomePage } from "./docs/home";
+import { MarkdownStabilizerPage } from "./docs/markdown-stabilizer";
+import { PromptSurfacePage } from "./docs/prompt-surface";
+import { ThoughtVisualizerPage } from "./docs/thought-visualizer";
 import "./styles.css";
 
 export default function App() {
-  const [content, setContent] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [runId, setRunId] = useState(0);
-  const abortRef = useRef<AbortController | null>(null);
-
-  const naiveShifts = useLayoutShiftCounter(isStreaming);
-  const gentleShifts = useLayoutShiftCounter(isStreaming);
-
-  const startStream = useCallback(() => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    setContent("");
-    setIsStreaming(true);
-    setRunId((id) => id + 1);
-
-    void (async () => {
-      try {
-        for await (const chunk of simulateTokenStream(DEMO_MARKDOWN, controller.signal)) {
-          setContent((prev) => prev + chunk);
-        }
-      } catch {
-        // Aborted — expected on replay/unmount.
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsStreaming(false);
-        }
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    startStream();
-    return () => abortRef.current?.abort();
-  }, [startStream]);
-
   return (
-    <div className="app">
-      <header className="hero">
-        <p className="eyebrow">agentle-ui</p>
-        <h1>A gentle UI for chaotic AI streams.</h1>
-        <p className="subtitle">
-          Same simulated LLM output. Left: naive markdown on every token. Right: stabilized
-          rendering with buffered blocks.
-        </p>
-        <button type="button" className="replay" onClick={startStream}>
-          Replay stream
-        </button>
-      </header>
-
-      <section className="comparison" key={runId}>
-        <article className="pane">
-          <header className="pane-header">
-            <h2>Naive render</h2>
-            <p className="metric">Layout shifts: {naiveShifts}</p>
-          </header>
-          <NaiveMarkdown content={content} isStreaming={isStreaming} />
-        </article>
-
-        <article className="pane">
-          <header className="pane-header">
-            <h2>agentle-ui</h2>
-            <p className="metric metric--good">Layout shifts: {gentleShifts}</p>
-          </header>
-          <GentleMarkdown content={content} isComplete={!isStreaming} />
-        </article>
-      </section>
-    </div>
+    <Routes>
+      <Route element={<DocLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="getting-started" element={<GettingStartedPage />} />
+        <Route path="concepts" element={<ConceptsPage />} />
+        <Route path="markdown-stabilizer" element={<MarkdownStabilizerPage />} />
+        <Route path="thought-visualizer" element={<ThoughtVisualizerPage />} />
+        <Route path="action-card" element={<ActionCardPage />} />
+        <Route path="prompt-surface" element={<PromptSurfacePage />} />
+        <Route path="cli" element={<CliPage />} />
+        <Route path="api-reference" element={<ApiReferencePage />} />
+      </Route>
+    </Routes>
   );
 }

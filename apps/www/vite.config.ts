@@ -1,15 +1,30 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "node:path";
 
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      "@": resolve(__dirname, "src"),
-      "@registry": resolve(__dirname, "../../packages/agentle-ui/registry"),
-      "react-markdown": resolve(__dirname, "node_modules/react-markdown"),
-      "remark-gfm": resolve(__dirname, "node_modules/remark-gfm"),
+const registryRoot = resolve(__dirname, "../../packages/agentle-ui/registry");
+const sharedCss = resolve(registryRoot, "shared/agentle.css");
+
+function resolveRegistryCss(): Plugin {
+  return {
+    name: "resolve-registry-css",
+    resolveId(source, importer) {
+      if (source !== "./agentle.css" || !importer?.includes("/registry/")) {
+        return null;
+      }
+      return sharedCss;
     },
+  };
+}
+
+export default defineConfig({
+  plugins: [react(), resolveRegistryCss()],
+  resolve: {
+    alias: [
+      { find: "@", replacement: resolve(__dirname, "src") },
+      { find: "@registry", replacement: registryRoot },
+      { find: "react-markdown", replacement: resolve(__dirname, "node_modules/react-markdown") },
+      { find: "remark-gfm", replacement: resolve(__dirname, "node_modules/remark-gfm") },
+    ],
   },
 });

@@ -45,12 +45,12 @@ import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
 
 ## Pillars
 
-| Component           | Status  | Description                                                |
-| ------------------- | ------- | ---------------------------------------------------------- |
-| Markdown Stabilizer | v0.1    | Buffers incomplete markdown blocks to prevent layout shift |
-| Thought Visualizer  | planned | Shows what the agent is doing instead of a spinner         |
-| Action Card         | planned | Transparent tool-call UI for agentic actions               |
-| Prompt Surface      | planned | Multi-line input with attachments and slash commands       |
+| Component           | Status | Description                                                |
+| ------------------- | ------ | ---------------------------------------------------------- |
+| Markdown Stabilizer | v0.1   | Buffers incomplete markdown blocks to prevent layout shift |
+| Thought Visualizer  | v0.5   | Shows what the agent is doing instead of a spinner         |
+| Action Card         | v0.5   | Transparent tool-call UI for agentic actions               |
+| Prompt Surface      | v0.5   | Multi-line input with attachments and slash commands       |
 
 ## Bundle size
 
@@ -66,15 +66,15 @@ pnpm dev
 ```
 
 - `packages/agentle-ui` — npm package (hooks, engines, CLI, registry templates)
-- `apps/www` — jank vs gentle demo site
+- `apps/www` — documentation site with live demos
 
-## Demo
+## Documentation
 
 ```bash
 pnpm dev
 ```
 
-Open the local Vite app to compare naive markdown rendering against stabilized rendering with live layout-shift counters.
+Open the local docs site for getting started guides, API reference, CLI docs, and live demos for all four pillars.
 
 ## License
 
