@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useLayoutEffect, type ReactNode } from "react";
 import { useDocPage } from "./doc-page";
 
 interface AnchorHeadingProps {
@@ -10,10 +10,11 @@ interface AnchorHeadingProps {
 export function AnchorHeading({ id, level, children }: AnchorHeadingProps) {
   const { registerHeading } = useDocPage();
   const Tag = level === 2 ? "h2" : "h3";
+  const text = String(children);
 
-  useEffect(() => {
-    registerHeading({ id, text: String(children), level });
-  }, [id, children, level, registerHeading]);
+  useLayoutEffect(() => {
+    registerHeading({ id, text, level });
+  }, [id, text, level, registerHeading]);
 
   return (
     <Tag id={id} className={`doc-heading doc-heading--h${level}`}>

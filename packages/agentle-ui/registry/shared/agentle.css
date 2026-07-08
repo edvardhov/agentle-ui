@@ -51,6 +51,9 @@
   border-radius: var(--agentle-radius);
   padding: 1rem;
   overflow-x: auto;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-break: break-word;
   font-family: var(--agentle-font-mono);
   font-size: 0.85rem;
 }
@@ -227,6 +230,7 @@
   padding: 0.75rem 1rem;
   border: 0;
   background: transparent;
+  color: var(--agentle-text);
   cursor: pointer;
   text-align: left;
 }
@@ -235,6 +239,7 @@
   flex: 1;
   font-family: var(--agentle-font-mono);
   font-size: 0.85rem;
+  color: var(--agentle-text);
 }
 
 .agentle-action-card__duration {
@@ -326,6 +331,13 @@
   align-items: flex-end;
 }
 
+.agentle-prompt__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .agentle-prompt__textarea {
   flex: 1;
   resize: none;
@@ -339,8 +351,7 @@
   max-height: 10rem;
 }
 
-.agentle-prompt__submit,
-.agentle-prompt__attach {
+.agentle-prompt__submit {
   border: 1px solid var(--agentle-border);
   background: var(--agentle-bg-subtle);
   color: var(--agentle-text);
@@ -348,6 +359,33 @@
   padding: 0.45rem 0.9rem;
   cursor: pointer;
   font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.agentle-prompt__attach {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--agentle-border);
+  background: var(--agentle-bg-subtle);
+  color: var(--agentle-text-muted);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.agentle-prompt__attach:hover {
+  background: var(--agentle-bg);
+  color: var(--agentle-text);
+  border-color: color-mix(in srgb, var(--agentle-accent) 35%, var(--agentle-border));
+}
+
+.agentle-prompt__attach-icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 .agentle-prompt__submit:disabled {

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Highlight, themes } from "prism-react-renderer";
+import { Highlight } from "prism-react-renderer";
+import { agentleCodeTheme } from "../../lib/agentle-code-theme";
 
 interface CodeBlockProps {
   code: string;
@@ -24,7 +25,7 @@ export function CodeBlock({ code, language = "tsx", filename }: CodeBlockProps) 
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <Highlight theme={themes.nightOwl} code={code.trim()} language={language}>
+      <Highlight theme={agentleCodeTheme} code={code.trim()} language={language}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre className={`${className} code-block__pre`} style={style}>
             {tokens.map((line, index) => (

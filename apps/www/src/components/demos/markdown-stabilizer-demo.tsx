@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { GentleMarkdown } from "../gentle-markdown";
 import { NaiveMarkdown } from "../naive-markdown";
 import { LiveDemo } from "../docs/live-demo";
+import { ReplayButton } from "../docs/replay-button";
 import { useLayoutShiftCounter } from "../../hooks/use-layout-shift-counter";
 import { DEMO_MARKDOWN, simulateTokenStream } from "../../lib/stream-simulator";
 
@@ -56,11 +57,7 @@ export function MarkdownStabilizerDemo({
     <LiveDemo
       title={compact ? "Live comparison" : "Naive vs stabilized markdown"}
       description="Same simulated LLM output. Left re-parses on every token; right buffers incomplete blocks."
-      controls={
-        <button type="button" className="btn btn--ghost" onClick={startStream}>
-          Replay stream
-        </button>
-      }
+      controls={<ReplayButton onClick={startStream} label="Replay stream" />}
     >
       <section className={`comparison${compact ? " comparison--compact" : ""}`} key={runId}>
         <article className="pane">

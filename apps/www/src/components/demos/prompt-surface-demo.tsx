@@ -15,7 +15,7 @@ export function PromptSurfaceDemo() {
       title="Prompt input"
       description="Multi-line input with attachments and slash commands. Press Enter to send, Shift+Enter for newline."
     >
-      <div className="demo-panel demo-panel--light">
+      <div className="demo-panel demo-panel--prompt">
         <PromptSurface
           commands={[
             {

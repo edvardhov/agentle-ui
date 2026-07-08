@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ThoughtStep } from "agentle-ui";
 import { ThoughtVisualizer } from "@registry/thought-visualizer/thought-visualizer";
 import { LiveDemo } from "../docs/live-demo";
+import { ReplayButton } from "../docs/replay-button";
 import { runThoughtSimulation } from "../../lib/thought-simulator";
 import "@registry/shared/agentle.css";
 
@@ -31,11 +32,7 @@ export function ThoughtVisualizerDemo() {
     <LiveDemo
       title="Thought stream"
       description="Thought steps activate and complete in sequence, then collapse into a summary."
-      controls={
-        <button type="button" className="btn btn--ghost" onClick={startSimulation}>
-          Replay
-        </button>
-      }
+      controls={<ReplayButton onClick={startSimulation} />}
     >
       <div className="demo-panel" key={runId}>
         {steps.length > 0 ? (

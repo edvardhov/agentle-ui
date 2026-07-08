@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { AgentAction } from "agentle-ui";
 import { ActionCard } from "@registry/action-card/action-card";
 import { LiveDemo } from "../docs/live-demo";
+import { ReplayButton } from "../docs/replay-button";
 import { runActionSimulation } from "../../lib/action-simulator";
 import "@registry/shared/agentle.css";
 
@@ -31,11 +32,7 @@ export function ActionCardDemo() {
     <LiveDemo
       title="Agent tool calls"
       description="Running actions auto-expand; completed actions show duration and collapsible JSON."
-      controls={
-        <button type="button" className="btn btn--ghost" onClick={startSimulation}>
-          Replay
-        </button>
-      }
+      controls={<ReplayButton onClick={startSimulation} />}
     >
       <div className="demo-panel" key={runId}>
         {actions.length > 0 ? <ActionCard action={actions} /> : <p className="demo-empty">Starting agent...</p>}
