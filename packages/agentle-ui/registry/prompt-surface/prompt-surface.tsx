@@ -18,7 +18,6 @@ export function PromptSurface({ commands, disabled, onSubmit }: PromptSurfacePro
     removeAttachment,
     filteredCommands,
     selectedCommandIndex,
-    activeCommand,
     handleKeyDown,
     submit,
   } = usePromptSurface({ commands, onSubmit, disabled });

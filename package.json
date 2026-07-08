@@ -1,6 +1,7 @@
 {
   "name": "agentle-ui-monorepo",
   "private": true,
+  "type": "module",
   "author": "edvardhov",
   "license": "MIT",
   "scripts": {
