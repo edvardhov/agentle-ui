@@ -40,7 +40,7 @@ Or copy the styled template:
 ```tsx
 import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
 
-<MarkdownStabilizer content={streamOrString} />
+<MarkdownStabilizer content={streamOrString} />;
 ```
 
 ## Pillars
@@ -51,12 +51,6 @@ import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
 | Thought Visualizer  | planned | Shows what the agent is doing instead of a spinner         |
 | Action Card         | planned | Transparent tool-call UI for agentic actions               |
 | Prompt Surface      | planned | Multi-line input with attachments and slash commands       |
-
-## Works with what you already use
-
-Building on [assistant-ui](https://github.com/assistant-ui/assistant-ui), the Vercel AI SDK, LangGraph, or your own SSE pipeline? `agentle-ui` handles the presentation layer — stable markdown, visible agent activity, tool transparency, and prompt input.
-
-Use it wherever you already render model output. Pass strings or streams into the hooks or copy the styled templates. React is the only peer dependency.
 
 ## Bundle size
 
