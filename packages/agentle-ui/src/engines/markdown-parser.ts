@@ -6,16 +6,13 @@ import {
 } from "../constants";
 import type { BlockStatus, MarkdownBlock, MarkdownBlockType } from "../types";
 
-let blockCounter = 0;
-
 const HEADING_PATTERN = new RegExp(`^#{1,${MAX_HEADING_LEVEL}}\\s`);
 const THEMATIC_BREAK_PATTERN = new RegExp(
   `^(-{${THEMATIC_BREAK_MIN_CHARS},}|_{${THEMATIC_BREAK_MIN_CHARS},}|\\*{${THEMATIC_BREAK_MIN_CHARS},})$`,
 );
 
-function nextBlockId(): string {
-  blockCounter += 1;
-  return `block-${blockCounter}`;
+function blockId(type: MarkdownBlockType, startOffset: number): string {
+  return `${type}:${startOffset}`;
 }
 
 interface ParseState {
@@ -25,10 +22,13 @@ interface ParseState {
 
 export class MarkdownCompletenessParser {
   private state: ParseState = { blocks: [], parsedUpTo: 0 };
+  private lastText = "";
+  private lastStreamComplete: boolean | null = null;
 
   reset(): void {
     this.state = { blocks: [], parsedUpTo: 0 };
-    blockCounter = 0;
+    this.lastText = "";
+    this.lastStreamComplete = null;
   }
 
   parse(text: string, streamComplete = false): MarkdownBlock[] {
@@ -36,8 +36,7 @@ export class MarkdownCompletenessParser {
       this.reset();
     }
 
-    const newText = text.slice(this.state.parsedUpTo);
-    if (newText.length === 0 && !streamComplete) {
+    if (text === this.lastText && streamComplete === this.lastStreamComplete) {
       return this.state.blocks;
     }
 
@@ -104,7 +103,7 @@ export class MarkdownCompletenessParser {
         continue;
       }
 
-      const paragraphResult = parseParagraph(lines, index, lineStart, streamComplete);
+      const paragraphResult = parseParagraph(lines, index, lineStart);
       blocks.push(paragraphResult.block);
       index = paragraphResult.nextIndex;
       offset = paragraphResult.nextOffset;
@@ -112,6 +111,8 @@ export class MarkdownCompletenessParser {
 
     this.state.blocks = blocks;
     this.state.parsedUpTo = text.length;
+    this.lastText = text;
+    this.lastStreamComplete = streamComplete;
     return blocks;
   }
 }
@@ -124,7 +125,7 @@ function createBlock(
   status?: BlockStatus,
 ): MarkdownBlock {
   return {
-    id: nextBlockId(),
+    id: blockId(type, startOffset),
     type,
     content,
     status: status ?? inferStatus(type, content),
@@ -305,7 +306,6 @@ function parseParagraph(
   lines: string[],
   startIndex: number,
   startOffset: number,
-  streamComplete: boolean,
 ): { block: MarkdownBlock; nextIndex: number; nextOffset: number } {
   let index = startIndex;
   let offset = startOffset;

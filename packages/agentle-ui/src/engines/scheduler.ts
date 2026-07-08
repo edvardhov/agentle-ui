@@ -4,10 +4,10 @@ export type SchedulerListener = () => void;
 
 export class PaintScheduler {
   private listeners = new Set<SchedulerListener>();
-  private pending = false;
   private rafId: number | null = null;
+  private trailingTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private debounceMs: number;
-  private timeoutId: ReturnType<typeof setTimeout> | null = null;
+  private dirty = false;
 
   constructor(debounceMs = DEFAULT_DEBOUNCE_MS) {
     this.debounceMs = debounceMs;
@@ -26,56 +26,65 @@ export class PaintScheduler {
 
   notify(): void {
     if (this.debounceMs <= 0) {
-      this.flush();
+      this.emit();
       return;
     }
 
-    if (this.timeoutId !== null) {
-      clearTimeout(this.timeoutId);
+    this.dirty = true;
+
+    if (this.rafId === null) {
+      this.rafId = requestAnimationFrame(() => {
+        this.rafId = null;
+        if (this.dirty) {
+          this.dirty = false;
+          this.emit();
+        }
+      });
     }
 
-    this.timeoutId = setTimeout(() => {
-      this.timeoutId = null;
-      this.scheduleFrame();
+    if (this.trailingTimeoutId !== null) {
+      clearTimeout(this.trailingTimeoutId);
+    }
+
+    this.trailingTimeoutId = setTimeout(() => {
+      this.trailingTimeoutId = null;
+      if (this.dirty) {
+        this.dirty = false;
+        if (this.rafId !== null) {
+          cancelAnimationFrame(this.rafId);
+          this.rafId = null;
+        }
+        this.emit();
+      }
     }, this.debounceMs);
   }
 
   flush(): void {
-    if (this.timeoutId !== null) {
-      clearTimeout(this.timeoutId);
-      this.timeoutId = null;
+    this.cancelPending();
+    this.emit();
+  }
+
+  cancelPending(): void {
+    if (this.trailingTimeoutId !== null) {
+      clearTimeout(this.trailingTimeoutId);
+      this.trailingTimeoutId = null;
     }
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
-    this.pending = false;
-    for (const listener of this.listeners) {
-      listener();
-    }
+    this.dirty = false;
   }
 
   dispose(): void {
-    if (this.timeoutId !== null) {
-      clearTimeout(this.timeoutId);
-    }
-    if (this.rafId !== null) {
-      cancelAnimationFrame(this.rafId);
-    }
+    this.cancelPending();
     this.listeners.clear();
   }
 
-  private scheduleFrame(): void {
-    if (this.pending) return;
-    this.pending = true;
-
-    this.rafId = requestAnimationFrame(() => {
-      this.rafId = null;
-      this.pending = false;
-      for (const listener of this.listeners) {
-        listener();
-      }
-    });
+  private emit(): void {
+    for (const listener of this.listeners) {
+      listener();
+    }
   }
 }
 
@@ -89,9 +98,7 @@ export class StreamStore<T> {
     this.snapshot = initial;
     this.scheduler = scheduler;
     this.scheduler.subscribe(() => {
-      for (const listener of this.listeners) {
-        listener();
-      }
+      this.notifyListeners();
     });
   }
 
@@ -112,10 +119,8 @@ export class StreamStore<T> {
   flush(next: T): void {
     this.snapshot = next;
     this.version += 1;
-    this.scheduler.flush();
-    for (const listener of this.listeners) {
-      listener();
-    }
+    this.scheduler.cancelPending();
+    this.notifyListeners();
   }
 
   subscribe(listener: () => void): () => void {
@@ -127,5 +132,11 @@ export class StreamStore<T> {
 
   dispose(): void {
     this.listeners.clear();
+  }
+
+  private notifyListeners(): void {
+    for (const listener of this.listeners) {
+      listener();
+    }
   }
 }

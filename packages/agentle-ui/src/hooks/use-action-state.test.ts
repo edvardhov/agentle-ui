@@ -34,4 +34,30 @@ describe("useActionState", () => {
     expect(result.current.isExpanded("1")).toBe(true);
     expect(result.current.formatDuration(result.current.actions[0]!)).toBe("1.2s");
   });
+
+  it("captures timestamps when running actions transition to success", () => {
+    const { result, rerender } = renderHook(({ action }) => useActionState(action), {
+      initialProps: {
+        action: {
+          id: "1",
+          name: "web_search",
+          status: "running" as const,
+        },
+      },
+    });
+
+    const startedAt = result.current.actions[0]?.startedAt;
+    expect(startedAt).toBeTypeOf("number");
+
+    rerender({
+      action: {
+        id: "1",
+        name: "web_search",
+        status: "success" as const,
+        startedAt,
+      },
+    });
+
+    expect(result.current.actions[0]?.completedAt).toBeTypeOf("number");
+  });
 });

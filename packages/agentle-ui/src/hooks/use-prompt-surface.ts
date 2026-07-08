@@ -9,7 +9,7 @@ export interface UsePromptSurfaceOptions {
   commands?: SlashCommand[];
   maxAttachments?: number;
   maxFileSize?: number;
-  onSubmit?: (text: string, attachments: PromptAttachment[]) => void;
+  onSubmit?: (text: string, attachments: PromptAttachment[]) => void | Promise<void>;
   disabled?: boolean;
 }
 
@@ -22,7 +22,7 @@ export interface UsePromptSurfaceResult {
   activeCommand: SlashCommand | null;
   filteredCommands: SlashCommand[];
   handleKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
-  submit: () => void;
+  submit: () => void | Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -88,17 +88,20 @@ export function usePromptSurface(options: UsePromptSurfaceOptions = {}): UseProm
     setAttachments((current) => current.filter((item) => item.id !== id));
   }, []);
 
-  const submit = useCallback(() => {
+  const submit = useCallback(async () => {
     if (disabled || isSubmitting) return;
     const trimmed = text.trim();
     if (!trimmed) return;
 
     setIsSubmitting(true);
-    onSubmitRef.current?.(trimmed, attachments);
-    setText("");
-    setAttachments([]);
-    setCommandQuery(null);
-    setIsSubmitting(false);
+    try {
+      await onSubmitRef.current?.(trimmed, attachments);
+      setText("");
+      setAttachments([]);
+      setCommandQuery(null);
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [attachments, disabled, isSubmitting, text]);
 
   const handleKeyDown = useCallback(

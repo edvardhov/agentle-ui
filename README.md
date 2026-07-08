@@ -59,7 +59,7 @@ import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
 
 ## Bundle size
 
-Core hooks: **4.58 KB** gzipped (budget: 15 KB).
+Core hooks: **< 15 KB** gzipped (enforced by `size-limit` in CI).
 
 ## Monorepo
 

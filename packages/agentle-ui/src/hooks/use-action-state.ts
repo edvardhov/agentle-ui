@@ -28,39 +28,59 @@ export function useActionState(action: AgentAction | AgentAction[]): UseActionSt
   const incoming = useMemo(() => {
     const current = actionRef.current;
     return Array.isArray(current) ? current : [current];
+    // actionKey serializes action updates for memo invalidation
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- actionKey tracks serialized action changes
   }, [actionKey]);
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const timestampsRef = useRef<Map<string, { startedAt?: number; completedAt?: number }>>(
     new Map(),
   );
+  const [timestampVersion, setTimestampVersion] = useState(0);
 
-  const actions = useMemo(() => {
-    return incoming.map((item) => {
+  useEffect(() => {
+    let changed = false;
+
+    for (const item of incoming) {
       const tracked = timestampsRef.current.get(item.id) ?? {};
-      const startedAt = item.startedAt ?? tracked.startedAt;
+      let startedAt = item.startedAt ?? tracked.startedAt;
       let completedAt = item.completedAt ?? tracked.completedAt;
 
       if (item.status === "running" && !startedAt) {
-        timestampsRef.current.set(item.id, { startedAt: Date.now(), completedAt });
+        startedAt = Date.now();
+        changed = true;
       } else if (
         (item.status === "success" || item.status === "error") &&
         startedAt &&
         !completedAt
       ) {
         completedAt = Date.now();
-        timestampsRef.current.set(item.id, { startedAt, completedAt });
-      } else {
-        timestampsRef.current.set(item.id, { startedAt, completedAt });
+        changed = true;
       }
 
+      const next = { startedAt, completedAt };
+      if (next.startedAt !== tracked.startedAt || next.completedAt !== tracked.completedAt) {
+        timestampsRef.current.set(item.id, next);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      setTimestampVersion((version) => version + 1);
+    }
+  }, [incoming]);
+
+  const actions = useMemo(() => {
+    void timestampVersion;
+    return incoming.map((item) => {
+      const tracked = timestampsRef.current.get(item.id) ?? {};
       return {
         ...item,
-        startedAt,
-        completedAt,
+        startedAt: item.startedAt ?? tracked.startedAt,
+        completedAt: item.completedAt ?? tracked.completedAt,
       };
     });
-  }, [incoming]);
+  }, [incoming, timestampVersion]);
 
   useEffect(() => {
     setExpanded((current) => {
@@ -69,10 +89,6 @@ export function useActionState(action: AgentAction | AgentAction[]): UseActionSt
       for (const item of actions) {
         if (!(item.id in next)) {
           next[item.id] = item.status === "running";
-          changed = true;
-        }
-        if (item.status === "success" && next[item.id] === undefined) {
-          next[item.id] = false;
           changed = true;
         }
       }

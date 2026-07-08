@@ -10,12 +10,13 @@ async function main(): Promise<void> {
       await initCommand();
       break;
     case "add": {
-      const component = args[0];
+      const overwrite = args.includes("--overwrite") || args.includes("--force");
+      const component = args.find((arg) => !arg.startsWith("-"));
       if (!component) {
-        console.error("Usage: npx agentle-ui add <component>");
+        console.error("Usage: npx agentle-ui add <component> [--overwrite]");
         process.exit(1);
       }
-      await addCommand(component);
+      await addCommand(component, { overwrite });
       break;
     }
     default: {

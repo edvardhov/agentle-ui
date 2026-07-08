@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      - run: pnpm --filter agentle-ui size
+
+  quality:
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter @agentle-ui/www build
+
+      - name: Lighthouse CLS budget
+        run: npx --yes @lhci/cli@0.14.0 autorun --config=lighthouserc.json
+
+      - name: Serve docs for accessibility scan
+        run: pnpm --filter @agentle-ui/www preview --host 127.0.0.1 --port 4173 &
+        shell: bash
+
+      - name: Wait for docs server
+        run: npx --yes wait-on@8.0.1 http://127.0.0.1:4173/example
+
+      - name: axe accessibility scan
+        run: npx --yes @axe-core/cli@4.10.3 http://127.0.0.1:4173/example --exit

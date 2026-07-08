@@ -17,17 +17,37 @@ describe("useThoughtStream", () => {
   });
 
   it("builds summary when stream completes", async () => {
-    async function* stream() {
+    async function* makeSummaryStream() {
       yield '{"id":"1","label":"Searching the web...","status":"complete"}\n';
       yield '{"id":"2","label":"Reading 3 files...","status":"complete"}\n';
     }
 
-    const { result } = renderHook(() => useThoughtStream(stream()));
+    const stream = makeSummaryStream();
+    const { result } = renderHook(() => useThoughtStream(stream));
 
     await waitFor(() => {
       expect(result.current.isComplete).toBe(true);
     });
 
     expect(result.current.summary).toContain("Searching the web");
+  });
+
+  it("re-renders when array status changes with the same ids", async () => {
+    const initial = [{ id: "1", label: "Thinking...", status: "active" as const }];
+    const { result, rerender } = renderHook(({ steps }) => useThoughtStream(steps), {
+      initialProps: { steps: initial },
+    });
+
+    expect(result.current.isComplete).toBe(false);
+
+    rerender({
+      steps: [{ id: "1", label: "Thinking...", status: "complete" as const }],
+    });
+
+    await waitFor(() => {
+      expect(result.current.isComplete).toBe(true);
+    });
+
+    expect(result.current.summary).toContain("Thinking");
   });
 });

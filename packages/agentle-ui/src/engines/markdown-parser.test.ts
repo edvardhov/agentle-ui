@@ -4,7 +4,7 @@ import {
   MarkdownCompletenessParser,
   partitionBlocks,
 } from "../engines/markdown-parser";
-import { collectStreamInput, subscribeToStreamInput } from "../engines/stream-input";
+import { collectStreamInput, getStreamInputKey, subscribeToStreamInput } from "../engines/stream-input";
 
 describe("MarkdownCompletenessParser", () => {
   it("marks incomplete code fence until closing fence arrives", () => {
@@ -70,6 +70,33 @@ describe("MarkdownCompletenessParser", () => {
     expect(blocks.some((b) => b.type === "heading")).toBe(true);
     expect(blocks.some((b) => b.type === "paragraph")).toBe(true);
   });
+
+  it("keeps block ids stable across growing buffers", () => {
+    const parser = new MarkdownCompletenessParser();
+    const first = parser.parse("# Title", false);
+    const second = parser.parse("# Title\n\nHello", false);
+
+    expect(first[0]?.id).toBe(second[0]?.id);
+    expect(first[0]?.id).toBe("heading:0");
+  });
+
+  it("assigns unique ids across parser instances", () => {
+    const left = new MarkdownCompletenessParser();
+    const right = new MarkdownCompletenessParser();
+    const leftId = left.parse("# One", true)[0]?.id;
+    const rightId = right.parse("# Two", true)[0]?.id;
+
+    expect(leftId).toBe("heading:0");
+    expect(rightId).toBe("heading:0");
+  });
+
+  it("short-circuits when text and completion state are unchanged", () => {
+    const parser = new MarkdownCompletenessParser();
+    const first = parser.parse("Hello", false);
+    const second = parser.parse("Hello", false);
+
+    expect(first).toBe(second);
+  });
 });
 
 describe("stream-input", () => {
@@ -109,5 +136,12 @@ describe("stream-input", () => {
     unsub();
     await new Promise((r) => setTimeout(r, 10));
     expect(chunks.length).toBeLessThanOrEqual(2);
+  });
+
+  it("assigns distinct keys to distinct stream objects", () => {
+    const streamA = new ReadableStream<Uint8Array>();
+    const streamB = new ReadableStream<Uint8Array>();
+
+    expect(getStreamInputKey(streamA)).not.toBe(getStreamInputKey(streamB));
   });
 });

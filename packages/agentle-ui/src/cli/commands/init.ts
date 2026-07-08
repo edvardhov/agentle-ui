@@ -17,7 +17,7 @@ export async function initCommand(): Promise<void> {
     return;
   }
 
-  const config = await getDefaultConfig(cwd);
+  const config = await getDefaultConfig();
   await writeConfig(cwd, config);
   await mkdir(join(cwd, "components", "agentle"), { recursive: true });
 

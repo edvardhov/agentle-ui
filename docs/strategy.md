@@ -22,7 +22,7 @@ The 2026 AI UI landscape is crowded with chat frameworks (assistant-ui, Vercel A
 
 ### The Bet
 
-Our moat is hard logic — incremental markdown completeness parsing, stream buffering, paint scheduling — shipped via semver on npm. Our pixels are premium templates copied into the user's repo via CLI, giving them full ownership without maintenance burden on us. "Gentle" is not marketing fluff; it is a technical claim backed by zero-CLS guarantees, buffered rendering, and `prefers-reduced-motion` support.
+Our moat is hard logic — markdown completeness parsing with stable block IDs, stream buffering, and rAF-aligned paint scheduling — shipped via semver on npm. Our pixels are premium templates copied into the user's repo via CLI, giving them full ownership without maintenance burden on us. "Gentle" is not marketing fluff; it is a technical claim backed by zero-CLS guarantees (CI-enforced), buffered rendering, and `prefers-reduced-motion` support.
 
 ### Architecture in One Sentence
 
@@ -113,7 +113,7 @@ For frontend developers and indie hackers building AI agents, chatbots, and gene
 "We're not another chat framework. assistant-ui handles your thread state; agentle-ui handles presentation quality. Our Markdown Stabilizer guarantees zero CLS during token streaming — we buffer incomplete markdown structures and only render when they're visually complete. Our hooks accept plain strings or streams; no adapter packages, no AI SDK peer dependency. Styled templates copy into your repo so your design team owns the pixels. Logic ships via npm semver so parser fixes reach everyone."
 
 **OSS contributor (30 seconds):**  
-"The moat is the incremental markdown completeness parser and paint scheduler — that's the npm package. Templates are copy-paste React files consuming those hooks. Parser bugs get semver fixes; styling is the user's file. Monorepo, pnpm workspaces, MIT license."
+"The moat is the markdown completeness parser (stable block IDs, completeness classification) and paint scheduler — that's the npm package. Templates are copy-paste React files consuming those hooks. Parser bugs get semver fixes; styling is the user's file. Monorepo, pnpm workspaces, MIT license."
 
 ---
 
@@ -200,7 +200,7 @@ export function MarkdownStabilizer({ content }: { content: StreamInput }) {
 ```
 
 **Key Technical Challenges:**
-- Incremental markdown completeness detection without full re-parse on every token (trie-based fence tracking, row/column counting for tables).
+- Markdown completeness classification on growing buffers (fence/table/list detection, stable block IDs derived from position).
 - Skeleton dimension estimation for incomplete blocks (heuristic based on partial content + block type defaults).
 - Code block syntax highlighting deferred until fence closes (avoids re-highlighting on every token).
 
@@ -473,43 +473,37 @@ agentle-ui/
 | **Peer dependencies** | `react >= 18`, `react-dom >= 18` |
 | **AI-vendor dependencies** | **Zero** |
 | **Bundle budget** | < 15 KB gzipped for core hooks (parser + scheduler) |
-| **Public API** | Hooks + types only. No styled components in the npm package. |
+| **Public API** | Hooks, types, and thought-stream helpers. No styled components or engine internals in the npm package. |
 
 ```typescript
 // Public exports from "agentle-ui"
-export { useStabilizedMarkdown } from "./hooks/use-stabilized-markdown";
-export { useThoughtStream } from "./hooks/use-thought-stream";
-export { useActionState } from "./hooks/use-action-state";
-export { usePromptSurface } from "./hooks/use-prompt-surface";
+export { useStabilizedMarkdown, useThoughtStream, useActionState, usePromptSurface } from "./hooks";
 export type { StreamInput, MarkdownBlock, ThoughtStep, AgentAction, PromptAttachment, SlashCommand };
+export { mergeThoughtSteps, buildThoughtSummary, parseThoughtJsonLine } from "./engines/thought-parser";
 ```
 
 ### CLI Design
 
 | Command | Behavior |
 |---------|----------|
-| `npx agentle-ui init` | Detect project (Next.js, Vite, etc.), create `components/agentle/` directory, write `agentle-ui.json` config |
-| `npx agentle-ui add markdown-stabilizer` | Copy template + dependencies from registry into user's repo |
+| `npx agentle-ui init` | Create `components/agentle/` directory, write `agentle-ui.json` config |
+| `npx agentle-ui add markdown-stabilizer` | Copy template + dependencies from bundled registry into user's repo |
 | `npx agentle-ui add thought-visualizer` | Same pattern |
 | `npx agentle-ui add action-card` | Same pattern |
 | `npx agentle-ui add prompt-surface` | Same pattern |
-| `npx agentle-ui diff markdown-stabilizer` | (v1.0) Show diff between user's copied file and latest registry template |
+| `npx agentle-ui add <component> --overwrite` | Replace existing copied files (default: skip existing) |
+| `npx agentle-ui diff markdown-stabilizer` | (future) Show diff between user's copied file and latest registry template |
 
-**Registry hosting:** Static JSON + source files served from `apps/www` (same pattern as shadcn/ui). CLI fetches from `https://agentle-ui.dev/r/{component}.json` (or GitHub raw as fallback).
+**Registry hosting:** Templates ship inside the npm package (`registry/`). The CLI copies from the locally installed bundle — no network fetch required. A remote registry + `diff` command is planned for v1.0.
 
 **Config file (`agentle-ui.json`):**
 
 ```json
 {
-  "$schema": "https://agentle-ui.dev/schema.json",
+  "$schema": "./schema.json",
   "style": "default",
   "rsc": false,
   "tsx": true,
-  "tailwind": {
-    "config": "tailwind.config.ts",
-    "css": "src/app/globals.css",
-    "baseColor": "neutral"
-  },
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils"
@@ -673,8 +667,8 @@ The GitHub README must contain:
 
 | Metric | Target | Tool |
 |--------|--------|------|
-| Core bundle size | < 15 KB gzipped | size-limit CI |
-| CLS during stream | 0 | Lighthouse CI |
+| Core bundle size | < 15 KB gzipped | size-limit CI (enforced) |
+| CLS during stream | < 0.1 | Lighthouse CI (enforced) |
 | a11y violations | 0 | axe-core CI |
 | Time-to-first-integration | < 5 min | Manual verification, docs feedback |
 

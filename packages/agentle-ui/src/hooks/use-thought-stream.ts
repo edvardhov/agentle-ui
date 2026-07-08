@@ -139,7 +139,7 @@ export function useThoughtStream(
 
 function getThoughtInputKey(input: StreamInput | ThoughtStep[]): string {
   if (Array.isArray(input)) {
-    return `steps:${input.length}:${input.map((step) => step.id).join(",")}`;
+    return `steps:${input.length}:${input.map((step) => `${step.id}:${step.status}`).join(",")}`;
   }
   return getStreamInputKey(input);
 }

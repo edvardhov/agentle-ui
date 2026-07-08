@@ -5,6 +5,17 @@ export type StreamUnsubscribe = () => void;
 export type StreamListener = (chunk: string, done: boolean) => void;
 
 const textDecoder = new TextDecoder();
+let streamObjectIdCounter = 0;
+const streamObjectIds = new WeakMap<object, number>();
+
+function getStreamObjectId(value: object): number {
+  let id = streamObjectIds.get(value);
+  if (id === undefined) {
+    id = ++streamObjectIdCounter;
+    streamObjectIds.set(value, id);
+  }
+  return id;
+}
 
 export function subscribeToStreamInput(
   input: StreamInput,
@@ -37,9 +48,9 @@ export function getStreamInputKey(input: StreamInput): string {
     return `string:${input.length}:${input.slice(0, INPUT_KEY_FINGERPRINT_LENGTH)}`;
   }
   if (isReadableStream(input)) {
-    return `stream:readable:${input}`;
+    return `stream:readable:${getStreamObjectId(input)}`;
   }
-  return `stream:async:${input}`;
+  return `stream:async:${getStreamObjectId(input)}`;
 }
 
 export function isReadableStream(value: StreamInput): value is ReadableStream<Uint8Array> {

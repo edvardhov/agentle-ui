@@ -26,8 +26,11 @@ export function CliPage() {
       <AnchorHeading id="add" level={2}>
         add
       </AnchorHeading>
-      <CodeBlock language="bash" code="npx agentle-ui add markdown-stabilizer" />
-      <p>Copies template files to your project and installs component dependencies.</p>
+      <CodeBlock language="bash" code="npx agentle-ui add markdown-stabilizer\nnpx agentle-ui add markdown-stabilizer --overwrite" />
+      <p>
+        Copies template files from the bundled registry into your project and installs component
+        dependencies. Existing files are skipped unless you pass <code>--overwrite</code>.
+      </p>
 
       <AnchorHeading id="components" level={2}>
         Available components
@@ -53,11 +56,6 @@ export function CliPage() {
   "style": "default",
   "rsc": false,
   "tsx": true,
-  "tailwind": {
-    "config": "tailwind.config.ts",
-    "css": "src/app/globals.css",
-    "baseColor": "neutral"
-  },
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils"

@@ -13,11 +13,6 @@ export interface AgentleConfig {
   style: string;
   rsc: boolean;
   tsx: boolean;
-  tailwind: {
-    config: string;
-    css: string;
-    baseColor: string;
-  };
   aliases: {
     components: string;
     utils: string;
@@ -62,12 +57,18 @@ export async function copyRegistryFile(
   fileName: string,
   targetPath: string,
   sourcePath?: string,
-): Promise<void> {
+  overwrite = false,
+): Promise<boolean> {
+  if (!overwrite && existsSync(targetPath)) {
+    return false;
+  }
+
   const source = sourcePath
     ? join(REGISTRY_ROOT, sourcePath)
     : join(REGISTRY_ROOT, componentName, fileName);
   await mkdir(dirname(targetPath), { recursive: true });
   await copyFile(source, targetPath);
+  return true;
 }
 
 export async function listRegistryComponents(): Promise<string[]> {
@@ -108,16 +109,8 @@ export async function installDependencies(
   execSync(cmd, { cwd, stdio: "inherit" });
 }
 
-export async function getDefaultConfig(cwd: string): Promise<AgentleConfig> {
+export async function getDefaultConfig(): Promise<AgentleConfig> {
   const schemaPath = join(REGISTRY_ROOT, "schema.json");
   const raw = await readFile(schemaPath, "utf8");
-  const schema = JSON.parse(raw) as AgentleConfig;
-
-  if (existsSync(join(cwd, "src", "app", "globals.css"))) {
-    schema.tailwind.css = "src/app/globals.css";
-  } else if (existsSync(join(cwd, "src", "index.css"))) {
-    schema.tailwind.css = "src/index.css";
-  }
-
-  return schema;
+  return JSON.parse(raw) as AgentleConfig;
 }

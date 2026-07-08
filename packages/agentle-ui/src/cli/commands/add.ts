@@ -8,7 +8,10 @@ import {
   resolveTargetPath,
 } from "../utils.js";
 
-export async function addCommand(componentName: string): Promise<void> {
+export async function addCommand(
+  componentName: string,
+  options: { overwrite?: boolean } = {},
+): Promise<void> {
   const cwd = getProjectRoot();
   const config = await loadConfig(cwd);
 
@@ -28,14 +31,34 @@ export async function addCommand(componentName: string): Promise<void> {
     process.exit(1);
   }
 
+  let addedCount = 0;
+  let skippedCount = 0;
+
   for (const file of manifest.files) {
     const targetPath = resolveTargetPath(cwd, file.target);
-    await copyRegistryFile(componentName, file.name, targetPath, file.source);
-    console.log(`Added ${file.target}`);
+    const copied = await copyRegistryFile(
+      componentName,
+      file.name,
+      targetPath,
+      file.source,
+      options.overwrite,
+    );
+    if (copied) {
+      console.log(`Added ${file.target}`);
+      addedCount += 1;
+    } else {
+      console.warn(`Skipped ${file.target} (already exists; pass --overwrite to replace)`);
+      skippedCount += 1;
+    }
+  }
+
+  if (addedCount === 0 && skippedCount > 0) {
+    console.log("\nNo files copied. Re-run with --overwrite to replace existing files.");
+    return;
   }
 
   const deps = manifest.dependencies.filter((dep) => dep !== "agentle-ui");
-  if (deps.length > 0) {
+  if (deps.length > 0 && addedCount > 0) {
     console.log(`Installing dependencies: ${deps.join(", ")}`);
     await installDependencies(cwd, deps);
   }
