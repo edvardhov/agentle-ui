@@ -32,60 +32,53 @@ export function summarize(input: StreamResult): string {
 **Try it:** press Replay to stream the same content side by side.
 `;
 
-const CHUNK_SIZE_NEWLINE = 1;
-const CHUNK_SIZE_PUNCTUATION_MIN = 1;
-const CHUNK_SIZE_PUNCTUATION_RANGE = 2;
-const CHUNK_SIZE_PIPE_MIN = 1;
-const CHUNK_SIZE_PIPE_RANGE = 3;
-const CHUNK_SIZE_DEFAULT_MIN = 2;
-const CHUNK_SIZE_DEFAULT_RANGE = 6;
-
 const DELAY_INITIAL_MS = 20;
-const DELAY_NEWLINE_MIN_MS = 80;
-const DELAY_NEWLINE_RANGE_MS = 120;
-const DELAY_SENTENCE_MIN_MS = 60;
-const DELAY_SENTENCE_RANGE_MS = 80;
-const DELAY_PIPE_MIN_MS = 40;
-const DELAY_PIPE_RANGE_MS = 60;
-const DELAY_DEFAULT_MIN_MS = 15;
-const DELAY_DEFAULT_RANGE_MS = 35;
+const DELAY_NEWLINE_MS = 120;
+const DELAY_SENTENCE_MS = 80;
+const DELAY_PIPE_MS = 50;
+const DELAY_DEFAULT_MS = 25;
 
+/**
+ * Yields word-sized tokens (never splits mid-word) so markdown syntax like
+ * "# Streaming" is not broken into "# S" + "treaming", which produces
+ * garbled headings such as "S# Streaming..." on naive re-parse.
+ */
 export async function* simulateTokenStream(
   text: string,
   signal?: AbortSignal,
 ): AsyncGenerator<string> {
-  let index = 0;
+  const lines = text.split("\n");
+  let isFirstToken = true;
 
-  while (index < text.length) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
     if (signal?.aborted) return;
 
-    const chunkSize = pickChunkSize(text, index);
-    yield text.slice(index, index + chunkSize);
-    index += chunkSize;
+    const line = lines[lineIndex] ?? "";
+    const tokens = line.match(/\S+\s*/g);
 
-    const delay = pickDelay(text[index - 1]);
-    await sleep(delay, signal);
-  }
-}
+    if (tokens) {
+      for (const token of tokens) {
+        if (signal?.aborted) return;
+        yield token;
+        const delay = isFirstToken ? DELAY_INITIAL_MS : pickDelay(token.at(-1));
+        isFirstToken = false;
+        await sleep(delay, signal);
+      }
+    }
 
-function pickChunkSize(text: string, index: number): number {
-  const nextChar = text[index] ?? " ";
-  if (nextChar === "\n") return CHUNK_SIZE_NEWLINE;
-  if (/[.,!?;:]/.test(nextChar)) {
-    return CHUNK_SIZE_PUNCTUATION_MIN + Math.floor(Math.random() * CHUNK_SIZE_PUNCTUATION_RANGE);
+    if (lineIndex < lines.length - 1) {
+      yield "\n";
+      await sleep(DELAY_NEWLINE_MS, signal);
+    }
   }
-  if (nextChar === "|" || nextChar === "`") {
-    return CHUNK_SIZE_PIPE_MIN + Math.floor(Math.random() * CHUNK_SIZE_PIPE_RANGE);
-  }
-  return CHUNK_SIZE_DEFAULT_MIN + Math.floor(Math.random() * CHUNK_SIZE_DEFAULT_RANGE);
 }
 
 function pickDelay(previousChar: string | undefined): number {
-  if (!previousChar) return DELAY_INITIAL_MS;
-  if (previousChar === "\n") return DELAY_NEWLINE_MIN_MS + Math.random() * DELAY_NEWLINE_RANGE_MS;
-  if (/[.,!?]/.test(previousChar)) return DELAY_SENTENCE_MIN_MS + Math.random() * DELAY_SENTENCE_RANGE_MS;
-  if (previousChar === "|") return DELAY_PIPE_MIN_MS + Math.random() * DELAY_PIPE_RANGE_MS;
-  return DELAY_DEFAULT_MIN_MS + Math.random() * DELAY_DEFAULT_RANGE_MS;
+  if (!previousChar) return DELAY_DEFAULT_MS;
+  if (previousChar === "\n") return DELAY_NEWLINE_MS;
+  if (/[.,!?]/.test(previousChar)) return DELAY_SENTENCE_MS;
+  if (previousChar === "|") return DELAY_PIPE_MS;
+  return DELAY_DEFAULT_MS;
 }
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
