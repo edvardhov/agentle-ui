@@ -60,4 +60,4 @@ jobs:
         run: npx --yes wait-on@8.0.1 http://127.0.0.1:4173/example
 
       - name: axe accessibility scan
-        run: npx --yes @axe-core/cli@4.10.3 http://127.0.0.1:4173/example --exit
+        run: npx --yes @axe-core/cli@4.12.1 http://127.0.0.1:4173/example --exit

@@ -24,9 +24,6 @@ export function PromptSurface({ commands, disabled, onSubmit }: PromptSurfacePro
   } = usePromptSurface({ commands, onSubmit, disabled });
 
   const paletteOpen = filteredCommands.length > 0;
-  const activeDescendantId = paletteOpen && activeCommand
-    ? `agentle-command-${activeCommand.name}`
-    : undefined;
 
   return (
     <div className="agentle-prompt">
@@ -50,10 +47,7 @@ export function PromptSurface({ commands, disabled, onSubmit }: PromptSurfacePro
             placeholder="Ask anything..."
             disabled={disabled}
             rows={1}
-            role="combobox"
-            aria-expanded={paletteOpen}
-            aria-controls={paletteOpen ? "agentle-command-palette" : undefined}
-            aria-activedescendant={activeDescendantId}
+            aria-label="Message input"
           />
           <div className="agentle-prompt__actions">
             <label className="agentle-prompt__attach" aria-label="Attach files" title="Attach files">

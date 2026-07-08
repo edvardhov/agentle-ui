@@ -197,7 +197,7 @@ code {
 
 .topbar__tag {
   font-size: 0.72rem;
-  color: var(--ink-faint);
+  color: var(--ink-muted);
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.15rem 0.5rem;
@@ -239,7 +239,7 @@ code {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ink-faint);
+  color: var(--ink-muted);
 }
 
 .sidebar__list {
@@ -264,7 +264,7 @@ code {
 
 .sidebar__link--active {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-hover);
   font-weight: 600;
 }
 
