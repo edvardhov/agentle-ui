@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore, type MutableRefObject } from "react";
 import { DEFAULT_DEBOUNCE_MS } from "../constants";
 import {
   flushIncompleteBlocks,
@@ -38,6 +38,20 @@ const EMPTY_STATE: InternalState = {
   isComplete: false,
 };
 
+function ensureStore(
+  schedulerRef: MutableRefObject<PaintScheduler | null>,
+  storeRef: MutableRefObject<StreamStore<InternalState> | null>,
+  debounceMs: number,
+): StreamStore<InternalState> {
+  if (!schedulerRef.current) {
+    schedulerRef.current = new PaintScheduler(debounceMs);
+  }
+  if (!storeRef.current) {
+    storeRef.current = new StreamStore(EMPTY_STATE, schedulerRef.current);
+  }
+  return storeRef.current;
+}
+
 export function useStabilizedMarkdown(
   input: StreamInput,
   options: UseStabilizedMarkdownOptions = {},
@@ -52,14 +66,8 @@ export function useStabilizedMarkdown(
   }
 
   const schedulerRef = useRef<PaintScheduler | null>(null);
-  if (!schedulerRef.current) {
-    schedulerRef.current = new PaintScheduler(debounceMs);
-  }
-
   const storeRef = useRef<StreamStore<InternalState> | null>(null);
-  if (!storeRef.current) {
-    storeRef.current = new StreamStore(EMPTY_STATE, schedulerRef.current);
-  }
+  ensureStore(schedulerRef, storeRef, debounceMs);
 
   useEffect(() => {
     schedulerRef.current?.setDebounceMs(debounceMs);
@@ -71,14 +79,16 @@ export function useStabilizedMarkdown(
 
   useEffect(() => {
     const parser = parserRef.current!;
-    const store = storeRef.current!;
+    const store = ensureStore(schedulerRef, storeRef, debounceMs);
     const currentInput = inputRef.current;
 
     let buffer = "";
-    let streamDone = false;
     const seenRenderedIds = new Set<string>();
 
     const commit = (complete: boolean) => {
+      const activeStore = storeRef.current;
+      if (!activeStore) return;
+
       let blocks = parser.parse(buffer, complete);
       if (complete && flushOnComplete) {
         blocks = flushIncompleteBlocks(blocks);
@@ -101,9 +111,9 @@ export function useStabilizedMarkdown(
       };
 
       if (complete) {
-        store.flush(nextState);
+        activeStore.flush(nextState);
       } else {
-        store.update(nextState);
+        activeStore.update(nextState);
       }
     };
 
@@ -124,28 +134,30 @@ export function useStabilizedMarkdown(
 
     const unsubscribe = subscribeToStreamInput(currentInput, (chunk, done) => {
       buffer += chunk;
-      streamDone = done;
       commit(done);
     });
 
     return () => {
       unsubscribe();
     };
-  }, [inputKey, flushOnComplete, isComplete]);
+  }, [debounceMs, inputKey, flushOnComplete, isComplete]);
 
   useEffect(() => {
     return () => {
-      schedulerRef.current?.dispose();
       storeRef.current?.dispose();
+      schedulerRef.current?.dispose();
+      storeRef.current = null;
+      schedulerRef.current = null;
     };
   }, []);
 
   const subscribe = useCallback((listener: () => void) => {
-    return storeRef.current!.subscribe(listener);
-  }, []);
+    const store = storeRef.current ?? ensureStore(schedulerRef, storeRef, debounceMs);
+    return store.subscribe(listener);
+  }, [debounceMs]);
 
   const getSnapshot = useCallback(() => {
-    return storeRef.current!.getSnapshot();
+    return storeRef.current?.getSnapshot() ?? EMPTY_STATE;
   }, []);
 
   const getServerSnapshot = useCallback(() => EMPTY_STATE, []);

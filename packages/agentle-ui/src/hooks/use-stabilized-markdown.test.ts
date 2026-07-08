@@ -32,4 +32,70 @@ describe("useStabilizedMarkdown", () => {
     expect(result.current.renderedBlocks.some((b) => b.type === "code_fence")).toBe(true);
     expect(result.current.pendingBlocks).toHaveLength(0);
   });
+
+  it("flushes incomplete code fence when isComplete flips after rapid updates", async () => {
+    const broken = "```typescript\nconst x = 1;\n";
+
+    const { result, rerender } = renderHook(
+      ({ content, isComplete }: { content: string; isComplete: boolean }) =>
+        useStabilizedMarkdown(content, { isComplete }),
+      { initialProps: { content: "", isComplete: false } },
+    );
+
+    for (let i = 1; i <= broken.length; i += 2) {
+      rerender({ content: broken.slice(0, i), isComplete: false });
+    }
+
+    rerender({ content: broken, isComplete: true });
+
+    await waitFor(() => {
+      expect(result.current.isComplete).toBe(true);
+      expect(result.current.pendingBlocks).toHaveLength(0);
+      expect(result.current.renderedBlocks.some((b) => b.type === "code_fence")).toBe(true);
+    });
+  });
+
+  it("flushes when only isComplete flips without a content change", async () => {
+    const broken = "# Broken code fence\n\n```typescript\nexport function incomplete() {\n  return \"still streaming\n";
+
+    const { result, rerender } = renderHook(
+      ({ content, isComplete }: { content: string; isComplete: boolean }) =>
+        useStabilizedMarkdown(content, { isComplete }),
+      { initialProps: { content: broken, isComplete: false } },
+    );
+
+    expect(result.current.pendingBlocks.some((b) => b.type === "code_fence")).toBe(true);
+
+    rerender({ content: broken, isComplete: true });
+
+    await waitFor(() => {
+      expect(result.current.isStreaming).toBe(false);
+      expect(result.current.pendingBlocks).toHaveLength(0);
+      expect(result.current.renderedBlocks.some((b) => b.type === "code_fence")).toBe(true);
+    });
+  });
+
+  it("flushes after hook remount when stream completes", async () => {
+    const broken = "# Broken code fence\n\n```typescript\nexport function incomplete() {\n  return \"still streaming\n";
+
+    const { unmount } = renderHook(
+      ({ content, isComplete }: { content: string; isComplete: boolean }) =>
+        useStabilizedMarkdown(content, { isComplete }),
+      { initialProps: { content: broken, isComplete: false } },
+    );
+
+    unmount();
+
+    const { result } = renderHook(
+      ({ content, isComplete }: { content: string; isComplete: boolean }) =>
+        useStabilizedMarkdown(content, { isComplete }),
+      { initialProps: { content: broken, isComplete: true } },
+    );
+
+    await waitFor(() => {
+      expect(result.current.isComplete).toBe(true);
+      expect(result.current.pendingBlocks).toHaveLength(0);
+      expect(result.current.renderedBlocks.some((b) => b.type === "code_fence")).toBe(true);
+    });
+  });
 });

@@ -32,6 +32,33 @@ export function summarize(input: StreamResult): string {
 **Try it:** press Replay to stream the same content side by side.
 `;
 
+export const PRESET_BROKEN_FENCE = `# Broken code fence
+
+\`\`\`typescript
+export function incomplete() {
+  return "still streaming
+`;
+
+export const PRESET_HALF_TABLE = `# Partial table
+
+| Column A | Column B |
+| --- | --- |
+| Row 1 | Value 1 |
+| Row 2 |`;
+
+export const PRESET_LIST = `# Streaming list
+
+- First item arrives
+- Second item arrives
+- Third item still streaming
+`;
+
+export const MARKDOWN_PRESETS = [
+  { label: "Broken fence", value: PRESET_BROKEN_FENCE },
+  { label: "Half table", value: PRESET_HALF_TABLE },
+  { label: "Streaming list", value: PRESET_LIST },
+] as const;
+
 const DELAY_INITIAL_MS = 20;
 const DELAY_NEWLINE_MS = 120;
 const DELAY_SENTENCE_MS = 80;
@@ -46,6 +73,7 @@ const DELAY_DEFAULT_MS = 25;
 export async function* simulateTokenStream(
   text: string,
   signal?: AbortSignal,
+  speed = 1,
 ): AsyncGenerator<string> {
   const lines = text.split("\n");
   let isFirstToken = true;
@@ -62,15 +90,20 @@ export async function* simulateTokenStream(
         yield token;
         const delay = isFirstToken ? DELAY_INITIAL_MS : pickDelay(token.at(-1));
         isFirstToken = false;
-        await sleep(delay, signal);
+        await sleep(scaleDelay(delay, speed), signal);
       }
     }
 
     if (lineIndex < lines.length - 1) {
       yield "\n";
-      await sleep(DELAY_NEWLINE_MS, signal);
+      await sleep(scaleDelay(DELAY_NEWLINE_MS, speed), signal);
     }
   }
+}
+
+function scaleDelay(ms: number, speed: number): number {
+  const safeSpeed = Math.max(speed, 0.1);
+  return ms / safeSpeed;
 }
 
 function pickDelay(previousChar: string | undefined): number {

@@ -113,6 +113,9 @@ export class StreamStore<T> {
     this.snapshot = next;
     this.version += 1;
     this.scheduler.flush();
+    for (const listener of this.listeners) {
+      listener();
+    }
   }
 
   subscribe(listener: () => void): () => void {

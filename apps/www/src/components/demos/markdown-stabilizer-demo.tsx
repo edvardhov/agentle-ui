@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GentleMarkdown } from "../gentle-markdown";
 import { NaiveMarkdown } from "../naive-markdown";
+import { CustomizePanel } from "../docs/customize-panel";
 import { LiveDemo } from "../docs/live-demo";
 import { ReplayButton } from "../docs/replay-button";
 import { useLayoutShiftCounter } from "../../hooks/use-layout-shift-counter";
-import { DEMO_MARKDOWN, simulateTokenStream } from "../../lib/stream-simulator";
+import {
+  DEMO_MARKDOWN,
+  MARKDOWN_PRESETS,
+  simulateTokenStream,
+} from "../../lib/stream-simulator";
 
 interface MarkdownStabilizerDemoProps {
   autoStart?: boolean;
@@ -15,10 +20,16 @@ export function MarkdownStabilizerDemo({
   autoStart = true,
   compact = false,
 }: MarkdownStabilizerDemoProps) {
+  const [markdown, setMarkdown] = useState(DEMO_MARKDOWN);
+  const [speed, setSpeed] = useState(1);
   const [content, setContent] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [runId, setRunId] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
+  const markdownRef = useRef(markdown);
+  const speedRef = useRef(speed);
+  markdownRef.current = markdown;
+  speedRef.current = speed;
 
   const naiveShifts = useLayoutShiftCounter(isStreaming);
   const gentleShifts = useLayoutShiftCounter(isStreaming);
@@ -34,7 +45,11 @@ export function MarkdownStabilizerDemo({
 
     void (async () => {
       try {
-        for await (const chunk of simulateTokenStream(DEMO_MARKDOWN, controller.signal)) {
+        for await (const chunk of simulateTokenStream(
+          markdownRef.current,
+          controller.signal,
+          speedRef.current,
+        )) {
           setContent((prev) => prev + chunk);
         }
       } catch {
@@ -58,6 +73,55 @@ export function MarkdownStabilizerDemo({
       title={compact ? "Live comparison" : "Naive vs stabilized markdown"}
       description="Same simulated LLM output. Left re-parses on every token; right buffers incomplete blocks."
       controls={<ReplayButton onClick={startStream} label="Replay stream" />}
+      footer={
+        compact ? null : (
+          <CustomizePanel>
+            <div className="customize__field">
+              <label className="customize__label" htmlFor="markdown-input">
+                Markdown input
+              </label>
+              <textarea
+                id="markdown-input"
+                className="customize__textarea"
+                value={markdown}
+                onChange={(event) => setMarkdown(event.target.value)}
+                spellCheck={false}
+              />
+            </div>
+            <div className="customize__field">
+              <label className="customize__label" htmlFor="stream-speed">
+                Stream speed
+              </label>
+              <input
+                id="stream-speed"
+                className="customize__range"
+                type="range"
+                min={0.25}
+                max={4}
+                step={0.25}
+                value={speed}
+                onChange={(event) => setSpeed(Number(event.target.value))}
+              />
+              <span className="customize__range-value">{speed.toFixed(2)}x</span>
+            </div>
+            <div className="customize__field">
+              <span className="customize__label">Presets</span>
+              <div className="customize__presets">
+                {MARKDOWN_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    className="customize__chip"
+                    onClick={() => setMarkdown(preset.value)}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </CustomizePanel>
+        )
+      }
     >
       <section className={`comparison${compact ? " comparison--compact" : ""}`} key={runId}>
         <article className="pane">

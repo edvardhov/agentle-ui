@@ -1,7 +1,39 @@
+import { Link } from "react-router-dom";
 import { AnchorHeading } from "../components/docs/anchor-heading";
 import { Callout } from "../components/docs/callout";
 import { CodeBlock } from "../components/docs/code-block";
 import { Pill } from "../components/docs/pill";
+
+const PILLARS = [
+  {
+    title: "Markdown Stabilizer",
+    path: "/markdown-stabilizer",
+    hook: "useStabilizedMarkdown",
+    template: "markdown-stabilizer",
+    component: "MarkdownStabilizer",
+  },
+  {
+    title: "Thought Visualizer",
+    path: "/thought-visualizer",
+    hook: "useThoughtStream",
+    template: "thought-visualizer",
+    component: "ThoughtVisualizer",
+  },
+  {
+    title: "Action Card",
+    path: "/action-card",
+    hook: "useActionState",
+    template: "action-card",
+    component: "ActionCard",
+  },
+  {
+    title: "Prompt Surface",
+    path: "/prompt-surface",
+    hook: "usePromptSurface",
+    template: "prompt-surface",
+    component: "PromptSurface",
+  },
+] as const;
 
 export function GettingStartedPage() {
   return (
@@ -31,10 +63,21 @@ npx agentle-ui add markdown-stabilizer`}
         stabilizer template also installs <code>react-markdown</code> and <code>remark-gfm</code>.
       </Callout>
 
-      <AnchorHeading id="headless-hook" level={2}>
-        Headless hook
+      <AnchorHeading id="hooks" level={2}>
+        Hooks
       </AnchorHeading>
-      <p>Use hooks when you want full control over markup and styling.</p>
+      <p>
+        Use hooks when you want full control over markup and styling. Each pillar has a headless hook
+        — see the <Link to="/api-reference#hooks">API reference</Link> for full signatures.
+      </p>
+      <ul>
+        {PILLARS.map((pillar) => (
+          <li key={pillar.hook}>
+            <code>{pillar.hook}</code> —{" "}
+            <Link to={pillar.path}>{pillar.title}</Link>
+          </li>
+        ))}
+      </ul>
       <CodeBlock
         code={`import { useStabilizedMarkdown } from "agentle-ui";
 
@@ -56,10 +99,24 @@ export function Answer({ content, done }: { content: string; done: boolean }) {
 }`}
       />
 
-      <AnchorHeading id="styled-template" level={2}>
-        Styled template
+      <AnchorHeading id="templates" level={2}>
+        Templates
       </AnchorHeading>
-      <p>Copy a registry template into your repo and own the pixels.</p>
+      <p>
+        Copy a styled registry template into your repo with the CLI, then own the pixels. Each
+        component page covers install, usage, and live demos.
+      </p>
+      <ul>
+        {PILLARS.map((pillar) => (
+          <li key={pillar.template}>
+            <code>npx agentle-ui add {pillar.template}</code> →{" "}
+            <Link to={pillar.path}>{pillar.component}</Link>
+          </li>
+        ))}
+      </ul>
+      <p>
+        Learn more in the <Link to="/cli">CLI reference</Link>.
+      </p>
       <CodeBlock
         code={`import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
 
