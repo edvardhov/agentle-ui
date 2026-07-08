@@ -32,6 +32,24 @@ export function summarize(input: StreamResult): string {
 **Try it:** press Replay to stream the same content side by side.
 `;
 
+const CHUNK_SIZE_NEWLINE = 1;
+const CHUNK_SIZE_PUNCTUATION_MIN = 1;
+const CHUNK_SIZE_PUNCTUATION_RANGE = 2;
+const CHUNK_SIZE_PIPE_MIN = 1;
+const CHUNK_SIZE_PIPE_RANGE = 3;
+const CHUNK_SIZE_DEFAULT_MIN = 2;
+const CHUNK_SIZE_DEFAULT_RANGE = 6;
+
+const DELAY_INITIAL_MS = 20;
+const DELAY_NEWLINE_MIN_MS = 80;
+const DELAY_NEWLINE_RANGE_MS = 120;
+const DELAY_SENTENCE_MIN_MS = 60;
+const DELAY_SENTENCE_RANGE_MS = 80;
+const DELAY_PIPE_MIN_MS = 40;
+const DELAY_PIPE_RANGE_MS = 60;
+const DELAY_DEFAULT_MIN_MS = 15;
+const DELAY_DEFAULT_RANGE_MS = 35;
+
 export async function* simulateTokenStream(
   text: string,
   signal?: AbortSignal,
@@ -52,18 +70,22 @@ export async function* simulateTokenStream(
 
 function pickChunkSize(text: string, index: number): number {
   const nextChar = text[index] ?? " ";
-  if (nextChar === "\n") return 1;
-  if (/[.,!?;:]/.test(nextChar)) return 1 + Math.floor(Math.random() * 2);
-  if (nextChar === "|" || nextChar === "`") return 1 + Math.floor(Math.random() * 3);
-  return 2 + Math.floor(Math.random() * 6);
+  if (nextChar === "\n") return CHUNK_SIZE_NEWLINE;
+  if (/[.,!?;:]/.test(nextChar)) {
+    return CHUNK_SIZE_PUNCTUATION_MIN + Math.floor(Math.random() * CHUNK_SIZE_PUNCTUATION_RANGE);
+  }
+  if (nextChar === "|" || nextChar === "`") {
+    return CHUNK_SIZE_PIPE_MIN + Math.floor(Math.random() * CHUNK_SIZE_PIPE_RANGE);
+  }
+  return CHUNK_SIZE_DEFAULT_MIN + Math.floor(Math.random() * CHUNK_SIZE_DEFAULT_RANGE);
 }
 
 function pickDelay(previousChar: string | undefined): number {
-  if (!previousChar) return 20;
-  if (previousChar === "\n") return 80 + Math.random() * 120;
-  if (/[.,!?]/.test(previousChar)) return 60 + Math.random() * 80;
-  if (previousChar === "|") return 40 + Math.random() * 60;
-  return 15 + Math.random() * 35;
+  if (!previousChar) return DELAY_INITIAL_MS;
+  if (previousChar === "\n") return DELAY_NEWLINE_MIN_MS + Math.random() * DELAY_NEWLINE_RANGE_MS;
+  if (/[.,!?]/.test(previousChar)) return DELAY_SENTENCE_MIN_MS + Math.random() * DELAY_SENTENCE_RANGE_MS;
+  if (previousChar === "|") return DELAY_PIPE_MIN_MS + Math.random() * DELAY_PIPE_RANGE_MS;
+  return DELAY_DEFAULT_MIN_MS + Math.random() * DELAY_DEFAULT_RANGE_MS;
 }
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {

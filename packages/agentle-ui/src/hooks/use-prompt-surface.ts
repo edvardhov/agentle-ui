@@ -1,4 +1,8 @@
 import { useCallback, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import {
+  DEFAULT_MAX_ATTACHMENTS,
+  DEFAULT_MAX_FILE_SIZE_BYTES,
+} from "../constants";
 import type { PromptAttachment, SlashCommand } from "../types";
 
 export interface UsePromptSurfaceOptions {
@@ -25,8 +29,8 @@ export interface UsePromptSurfaceResult {
 export function usePromptSurface(options: UsePromptSurfaceOptions = {}): UsePromptSurfaceResult {
   const {
     commands = [],
-    maxAttachments = 5,
-    maxFileSize = 5 * 1024 * 1024,
+    maxAttachments = DEFAULT_MAX_ATTACHMENTS,
+    maxFileSize = DEFAULT_MAX_FILE_SIZE_BYTES,
     onSubmit,
     disabled = false,
   } = options;

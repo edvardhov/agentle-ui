@@ -1,4 +1,4 @@
-import type { ThoughtStep } from "../types";
+import { THOUGHT_STEP_STATUSES, type ThoughtStep } from "../types";
 
 export function parseThoughtJsonLine(line: string): ThoughtStep | null {
   const trimmed = line.trim();
@@ -7,12 +7,12 @@ export function parseThoughtJsonLine(line: string): ThoughtStep | null {
   try {
     const parsed = JSON.parse(trimmed) as Partial<ThoughtStep>;
     if (!parsed.id || !parsed.label || !parsed.status) return null;
-    if (!["active", "complete", "error"].includes(parsed.status)) return null;
+    if (!(THOUGHT_STEP_STATUSES as readonly string[]).includes(parsed.status)) return null;
     return {
       id: parsed.id,
       label: parsed.label,
       detail: parsed.detail,
-      status: parsed.status,
+      status: parsed.status as ThoughtStep["status"],
     };
   } catch {
     return null;
@@ -35,11 +35,7 @@ export function buildThoughtSummary(steps: ThoughtStep[]): string | null {
   if (completed.length === 0) return null;
 
   const labels = completed.map((step) =>
-    step.label
-      .replace(/\.{3}$/, "")
-      .replace(/\.\.\.$/, "")
-      .trim()
-      .toLowerCase(),
+    step.label.replace(/\.{3,}$/, "").trim().toLowerCase(),
   );
 
   if (labels.length === 1) {

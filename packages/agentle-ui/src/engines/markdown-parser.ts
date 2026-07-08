@@ -1,6 +1,17 @@
+import {
+  CODE_FENCE_CLOSE_COUNT,
+  MAX_HEADING_LEVEL,
+  TABLE_MIN_ROWS,
+  THEMATIC_BREAK_MIN_CHARS,
+} from "../constants";
 import type { BlockStatus, MarkdownBlock, MarkdownBlockType } from "../types";
 
 let blockCounter = 0;
+
+const HEADING_PATTERN = new RegExp(`^#{1,${MAX_HEADING_LEVEL}}\\s`);
+const THEMATIC_BREAK_PATTERN = new RegExp(
+  `^(-{${THEMATIC_BREAK_MIN_CHARS},}|_{${THEMATIC_BREAK_MIN_CHARS},}|\\*{${THEMATIC_BREAK_MIN_CHARS},})$`,
+);
 
 function nextBlockId(): string {
   blockCounter += 1;
@@ -55,7 +66,7 @@ export class MarkdownCompletenessParser {
         continue;
       }
 
-      if (/^#{1,6}\s/.test(line)) {
+      if (HEADING_PATTERN.test(line)) {
         blocks.push(createBlock("heading", sliceLines(lines, index, index + 1), lineStart, lineEnd));
         offset = lineEnd + 1;
         index += 1;
@@ -78,7 +89,7 @@ export class MarkdownCompletenessParser {
         continue;
       }
 
-      if (/^(-{3,}|_{3,}|\*{3,})$/.test(line.trim())) {
+      if (THEMATIC_BREAK_PATTERN.test(line.trim())) {
         blocks.push(createBlock("thematic_break", line, lineStart, lineEnd, "stable"));
         offset = lineEnd + 1;
         index += 1;
@@ -129,12 +140,12 @@ function inferStatus(type: MarkdownBlockType, content: string): BlockStatus {
 
   if (type === "code_fence") {
     const fenceCount = (content.match(/^```/gm) ?? []).length;
-    return fenceCount >= 2 ? "complete" : "incomplete";
+    return fenceCount >= CODE_FENCE_CLOSE_COUNT ? "complete" : "incomplete";
   }
 
   if (type === "table") {
     const rows = content.split("\n").filter(Boolean);
-    if (rows.length < 2) return "incomplete";
+    if (rows.length < TABLE_MIN_ROWS) return "incomplete";
     const hasSeparator = rows.some((row) => /^\|?[\s:-]+\|/.test(row));
     return hasSeparator ? "complete" : "incomplete";
   }
@@ -244,7 +255,7 @@ function parseTable(
   const rows = collected.filter(Boolean);
   const hasSeparator = rows.some((row) => /^\|?[\s:-]+\|/.test(row));
   const status: BlockStatus =
-    rows.length >= 2 && hasSeparator ? "complete" : atStreamEnd ? "complete" : "incomplete";
+    rows.length >= TABLE_MIN_ROWS && hasSeparator ? "complete" : atStreamEnd ? "complete" : "incomplete";
 
   return {
     block: createBlock("table", content, startOffset, offset - 1, status),
@@ -305,7 +316,7 @@ function parseParagraph(
     if (line.trim() === "") break;
     if (
       /^```/.test(line) ||
-      /^#{1,6}\s/.test(line) ||
+      HEADING_PATTERN.test(line) ||
       /^>\s?/.test(line) ||
       isTableStart(lines, index) ||
       /^(\s*)([-*+]|\d+\.)\s/.test(line)
@@ -318,7 +329,7 @@ function parseParagraph(
   }
 
   const content = collected.join("\n");
-  const status: BlockStatus = streamComplete ? "stable" : "stable";
+  const status: BlockStatus = "stable";
 
   return {
     block: createBlock("paragraph", content, startOffset, offset - 1, status),

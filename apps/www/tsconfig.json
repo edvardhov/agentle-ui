@@ -3,7 +3,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@registry/*": ["../../packages/agentle-ui/registry/*"],
+      "react-markdown": ["node_modules/react-markdown"],
+      "remark-gfm": ["node_modules/remark-gfm"]
     },
     "noEmit": true
   },

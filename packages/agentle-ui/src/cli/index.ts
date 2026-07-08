@@ -1,5 +1,6 @@
 import { addCommand } from "./commands/add.js";
 import { initCommand } from "./commands/init.js";
+import { listRegistryComponents } from "./utils.js";
 
 async function main(): Promise<void> {
   const [, , command, ...args] = process.argv;
@@ -17,14 +18,18 @@ async function main(): Promise<void> {
       await addCommand(component);
       break;
     }
-    default:
+    default: {
+      const components = await listRegistryComponents();
       console.log("agentle-ui — A gentle UI for chaotic AI streams\n");
       console.log("Usage:");
       console.log("  npx agentle-ui init");
       console.log("  npx agentle-ui add <component>");
       console.log("\nComponents:");
-      console.log("  markdown-stabilizer");
+      for (const name of components) {
+        console.log(`  ${name}`);
+      }
       break;
+    }
   }
 }
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DURATION_MS_THRESHOLD } from "../constants";
 import type { AgentAction } from "../types";
 
 export interface UseActionStateResult {
@@ -88,8 +89,8 @@ export function useActionState(action: AgentAction | AgentAction[]): UseActionSt
   const formatDuration = useCallback((item: AgentAction) => {
     if (item.startedAt == null || item.completedAt == null) return "";
     const ms = item.completedAt - item.startedAt;
-    if (ms < 1000) return `${ms}ms`;
-    return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < DURATION_MS_THRESHOLD) return `${ms}ms`;
+    return `${(ms / DURATION_MS_THRESHOLD).toFixed(1)}s`;
   }, []);
 
   const runningCount = actions.filter((item) => item.status === "running").length;

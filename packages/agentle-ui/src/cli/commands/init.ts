@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   getDefaultConfig,
   getProjectRoot,
+  listRegistryComponents,
   loadConfig,
   writeConfig,
 } from "../utils.js";
@@ -20,7 +21,12 @@ export async function initCommand(): Promise<void> {
   await writeConfig(cwd, config);
   await mkdir(join(cwd, "components", "agentle"), { recursive: true });
 
+  const components = await listRegistryComponents();
+
   console.log("Created agentle-ui.json");
   console.log("Created components/agentle/");
-  console.log("\nNext: npx agentle-ui add markdown-stabilizer");
+  console.log("\nAvailable components:");
+  for (const name of components) {
+    console.log(`  npx agentle-ui add ${name}`);
+  }
 }

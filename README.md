@@ -54,7 +54,7 @@ import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
 
 ## Bundle size
 
-Core hooks: **2.54 KB** gzipped (budget: 15 KB).
+Core hooks: **4.58 KB** gzipped (budget: 15 KB).
 
 ## Monorepo
 
@@ -65,8 +65,7 @@ pnpm test
 pnpm dev
 ```
 
-- `packages/agentle-ui` — npm package (hooks, engines, CLI)
-- `packages/registry` — component templates
+- `packages/agentle-ui` — npm package (hooks, engines, CLI, registry templates)
 - `apps/www` — jank vs gentle demo site
 
 ## Demo

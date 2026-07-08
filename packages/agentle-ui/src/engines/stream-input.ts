@@ -1,3 +1,4 @@
+import { INPUT_KEY_FINGERPRINT_LENGTH } from "../constants";
 import type { StreamInput } from "../types";
 
 export type StreamUnsubscribe = () => void;
@@ -29,6 +30,20 @@ export function subscribeToStreamInput(
   return () => {
     cancelled = true;
   };
+}
+
+export function getStreamInputKey(input: StreamInput): string {
+  if (typeof input === "string") {
+    return `string:${input.length}:${input.slice(0, INPUT_KEY_FINGERPRINT_LENGTH)}`;
+  }
+  if (isReadableStream(input)) {
+    return `stream:readable:${input}`;
+  }
+  return `stream:async:${input}`;
+}
+
+export function isReadableStream(value: StreamInput): value is ReadableStream<Uint8Array> {
+  return typeof value === "object" && value !== null && "getReader" in value;
 }
 
 async function consumeReadableStream(
@@ -76,10 +91,6 @@ async function consumeAsyncIterable(
       listener("", true);
     }
   }
-}
-
-function isReadableStream(value: StreamInput): value is ReadableStream<Uint8Array> {
-  return typeof value === "object" && value !== null && "getReader" in value;
 }
 
 export async function collectStreamInput(input: StreamInput): Promise<string> {

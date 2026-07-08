@@ -6,7 +6,7 @@ import {
   mergeThoughtSteps,
   parseThoughtJsonLine,
 } from "../engines/thought-parser";
-import { subscribeToStreamInput } from "../engines/stream-input";
+import { subscribeToStreamInput, getStreamInputKey } from "../engines/stream-input";
 import type { StreamInput, ThoughtStep } from "../types";
 
 export interface UseThoughtStreamOptions {
@@ -141,10 +141,7 @@ function getThoughtInputKey(input: StreamInput | ThoughtStep[]): string {
   if (Array.isArray(input)) {
     return `steps:${input.length}:${input.map((step) => step.id).join(",")}`;
   }
-  if (typeof input === "string") {
-    return `string:${input.length}:${input.slice(0, 32)}`;
-  }
-  return `stream:${input}`;
+  return getStreamInputKey(input);
 }
 
 function useReducedMotion(explicit?: boolean): boolean {

@@ -10,6 +10,23 @@ export type {
   PromptAttachment,
   SlashCommand,
 } from "./types";
+export {
+  BLOCK_STATUSES,
+  MARKDOWN_BLOCK_TYPES,
+  THOUGHT_STEP_STATUSES,
+  AGENT_ACTION_STATUSES,
+} from "./types";
+export {
+  DEFAULT_DEBOUNCE_MS,
+  INPUT_KEY_FINGERPRINT_LENGTH,
+  DEFAULT_MAX_ATTACHMENTS,
+  DEFAULT_MAX_FILE_SIZE_BYTES,
+  DURATION_MS_THRESHOLD,
+  CODE_FENCE_CLOSE_COUNT,
+  TABLE_MIN_ROWS,
+  MAX_HEADING_LEVEL,
+  THEMATIC_BREAK_MIN_CHARS,
+} from "./constants";
 export { useStabilizedMarkdown } from "./hooks/use-stabilized-markdown";
 export type {
   UseStabilizedMarkdownOptions,
@@ -31,5 +48,10 @@ export {
   mergeThoughtSteps,
   parseThoughtJsonLine,
 } from "./engines/thought-parser";
-export { subscribeToStreamInput, collectStreamInput } from "./engines/stream-input";
+export {
+  subscribeToStreamInput,
+  collectStreamInput,
+  getStreamInputKey,
+  isReadableStream,
+} from "./engines/stream-input";
 export { PaintScheduler, StreamStore } from "./engines/scheduler";

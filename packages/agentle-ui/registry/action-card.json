@@ -18,6 +18,7 @@
     },
     {
       "name": "agentle.css",
+      "source": "shared/agentle.css",
       "target": "components/agentle/agentle.css"
     }
   ]

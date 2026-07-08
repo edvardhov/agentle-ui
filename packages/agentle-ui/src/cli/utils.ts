@@ -1,11 +1,12 @@
 import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile, copyFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile, copyFile, readdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = resolve(__dirname, "..", "..");
 export const REGISTRY_ROOT = join(PACKAGE_ROOT, "registry");
+export const CONFIG_FILENAME = "agentle-ui.json";
 
 export interface AgentleConfig {
   $schema?: string;
@@ -28,7 +29,7 @@ export interface RegistryComponent {
   type: string;
   description: string;
   dependencies: string[];
-  files: Array<{ name: string; target: string }>;
+  files: Array<{ name: string; target: string; source?: string }>;
 }
 
 export function getProjectRoot(cwd = process.cwd()): string {
@@ -36,7 +37,7 @@ export function getProjectRoot(cwd = process.cwd()): string {
 }
 
 export function getConfigPath(cwd = process.cwd()): string {
-  return join(cwd, "agentle-ui.json");
+  return join(cwd, CONFIG_FILENAME);
 }
 
 export async function loadConfig(cwd = process.cwd()): Promise<AgentleConfig | null> {
@@ -60,10 +61,21 @@ export async function copyRegistryFile(
   componentName: string,
   fileName: string,
   targetPath: string,
+  sourcePath?: string,
 ): Promise<void> {
-  const sourcePath = join(REGISTRY_ROOT, componentName, fileName);
+  const source = sourcePath
+    ? join(REGISTRY_ROOT, sourcePath)
+    : join(REGISTRY_ROOT, componentName, fileName);
   await mkdir(dirname(targetPath), { recursive: true });
-  await copyFile(sourcePath, targetPath);
+  await copyFile(source, targetPath);
+}
+
+export async function listRegistryComponents(): Promise<string[]> {
+  const entries = await readdir(REGISTRY_ROOT);
+  return entries
+    .filter((entry) => entry.endsWith(".json") && entry !== "schema.json")
+    .map((entry) => entry.replace(/\.json$/, ""))
+    .sort();
 }
 
 export async function loadRegistryComponent(name: string): Promise<RegistryComponent> {

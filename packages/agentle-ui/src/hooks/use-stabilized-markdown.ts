@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { DEFAULT_DEBOUNCE_MS } from "../constants";
 import {
   flushIncompleteBlocks,
   MarkdownCompletenessParser,
   partitionBlocks,
 } from "../engines/markdown-parser";
 import { PaintScheduler, StreamStore } from "../engines/scheduler";
-import { subscribeToStreamInput } from "../engines/stream-input";
+import { getStreamInputKey, subscribeToStreamInput } from "../engines/stream-input";
 import type { MarkdownBlock, StreamInput } from "../types";
 
 export interface UseStabilizedMarkdownOptions {
@@ -41,7 +42,7 @@ export function useStabilizedMarkdown(
   input: StreamInput,
   options: UseStabilizedMarkdownOptions = {},
 ): StabilizedMarkdownState {
-  const { debounceMs = 16, flushOnComplete = true, onBlockRendered, isComplete = true } = options;
+  const { debounceMs = DEFAULT_DEBOUNCE_MS, flushOnComplete = true, onBlockRendered, isComplete = true } = options;
   const onBlockRenderedRef = useRef(onBlockRendered);
   onBlockRenderedRef.current = onBlockRendered;
 
@@ -64,7 +65,7 @@ export function useStabilizedMarkdown(
     schedulerRef.current?.setDebounceMs(debounceMs);
   }, [debounceMs]);
 
-  const inputKey = useMemo(() => getInputKey(input), [input]);
+  const inputKey = useMemo(() => getStreamInputKey(input), [input]);
   const inputRef = useRef(input);
   inputRef.current = input;
 
@@ -150,18 +151,4 @@ export function useStabilizedMarkdown(
   const getServerSnapshot = useCallback(() => EMPTY_STATE, []);
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}
-
-function getInputKey(input: StreamInput): string {
-  if (typeof input === "string") {
-    return `string:${input.length}:${input.slice(0, 32)}`;
-  }
-  if (isReadableStream(input)) {
-    return `stream:readable:${input}`;
-  }
-  return `stream:async:${input}`;
-}
-
-function isReadableStream(value: StreamInput): value is ReadableStream<Uint8Array> {
-  return typeof value === "object" && value !== null && "getReader" in value;
 }

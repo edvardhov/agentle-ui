@@ -1,7 +1,7 @@
 import { useStabilizedMarkdown } from "agentle-ui";
-import { BlockRenderer } from "./agentle/block-renderer";
-import { BlockSkeleton } from "./agentle/block-skeleton";
-import "./agentle/agentle.css";
+import { BlockRenderer } from "@registry/markdown-stabilizer/block-renderer";
+import { BlockSkeleton } from "@registry/markdown-stabilizer/block-skeleton";
+import "@registry/shared/agentle.css";
 
 interface GentleMarkdownProps {
   content: string;

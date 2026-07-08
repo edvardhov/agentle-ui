@@ -1,3 +1,5 @@
+import { DEFAULT_DEBOUNCE_MS } from "../constants";
+
 export type SchedulerListener = () => void;
 
 export class PaintScheduler {
@@ -7,7 +9,7 @@ export class PaintScheduler {
   private debounceMs: number;
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(debounceMs = 16) {
+  constructor(debounceMs = DEFAULT_DEBOUNCE_MS) {
     this.debounceMs = debounceMs;
   }
 

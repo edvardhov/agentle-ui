@@ -2,6 +2,7 @@ import {
   copyRegistryFile,
   getProjectRoot,
   installDependencies,
+  listRegistryComponents,
   loadConfig,
   loadRegistryComponent,
   resolveTargetPath,
@@ -16,18 +17,20 @@ export async function addCommand(componentName: string): Promise<void> {
     process.exit(1);
   }
 
+  const available = await listRegistryComponents();
+
   let manifest;
   try {
     manifest = await loadRegistryComponent(componentName);
   } catch {
     console.error(`Unknown component: ${componentName}`);
-    console.error("Available: markdown-stabilizer");
+    console.error(`Available: ${available.join(", ")}`);
     process.exit(1);
   }
 
   for (const file of manifest.files) {
     const targetPath = resolveTargetPath(cwd, file.target);
-    await copyRegistryFile(componentName, file.name, targetPath);
+    await copyRegistryFile(componentName, file.name, targetPath, file.source);
     console.log(`Added ${file.target}`);
   }
 

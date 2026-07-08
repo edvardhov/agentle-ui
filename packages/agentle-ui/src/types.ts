@@ -1,16 +1,19 @@
 export type StreamInput = string | AsyncIterable<string> | ReadableStream<Uint8Array>;
 
-export type BlockStatus = "incomplete" | "complete" | "stable";
+export const BLOCK_STATUSES = ["incomplete", "complete", "stable"] as const;
+export type BlockStatus = (typeof BLOCK_STATUSES)[number];
 
-export type MarkdownBlockType =
-  | "paragraph"
-  | "heading"
-  | "code_fence"
-  | "table"
-  | "list"
-  | "blockquote"
-  | "thematic_break"
-  | "html";
+export const MARKDOWN_BLOCK_TYPES = [
+  "paragraph",
+  "heading",
+  "code_fence",
+  "table",
+  "list",
+  "blockquote",
+  "thematic_break",
+  "html",
+] as const;
+export type MarkdownBlockType = (typeof MARKDOWN_BLOCK_TYPES)[number];
 
 export interface MarkdownBlock {
   id: string;
@@ -21,7 +24,8 @@ export interface MarkdownBlock {
   endOffset: number;
 }
 
-export type ThoughtStepStatus = "active" | "complete" | "error";
+export const THOUGHT_STEP_STATUSES = ["active", "complete", "error"] as const;
+export type ThoughtStepStatus = (typeof THOUGHT_STEP_STATUSES)[number];
 
 export interface ThoughtStep {
   id: string;
@@ -30,7 +34,8 @@ export interface ThoughtStep {
   status: ThoughtStepStatus;
 }
 
-export type AgentActionStatus = "running" | "success" | "error";
+export const AGENT_ACTION_STATUSES = ["running", "success", "error"] as const;
+export type AgentActionStatus = (typeof AGENT_ACTION_STATUSES)[number];
 
 export interface AgentAction {
   id: string;
