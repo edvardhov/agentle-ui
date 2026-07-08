@@ -1,5 +1,6 @@
 import { addCommand } from "./commands/add.js";
 import { initCommand } from "./commands/init.js";
+import { listCommand } from "./commands/list.js";
 import { listRegistryComponents } from "./utils.js";
 
 async function main(): Promise<void> {
@@ -19,12 +20,16 @@ async function main(): Promise<void> {
       await addCommand(component, { overwrite });
       break;
     }
+    case "list":
+      await listCommand();
+      break;
     default: {
       const components = await listRegistryComponents();
       console.log("agentle-ui — A gentle UI for chaotic AI streams\n");
       console.log("Usage:");
       console.log("  npx agentle-ui init");
-      console.log("  npx agentle-ui add <component>");
+      console.log("  npx agentle-ui add <component> [--overwrite]");
+      console.log("  npx agentle-ui list");
       console.log("\nComponents:");
       for (const name of components) {
         console.log(`  ${name}`);

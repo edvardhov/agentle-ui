@@ -9,9 +9,12 @@
     "lint": "eslint .",
     "typecheck": "pnpm --filter agentle-ui build && pnpm --filter @agentle-ui/www exec tsc -b --pretty false",
     "format": "prettier --write .",
-    "dev": "pnpm --filter @agentle-ui/www dev"
+    "dev": "pnpm --filter @agentle-ui/www dev",
+    "version-packages": "changeset version",
+    "release": "pnpm --filter agentle-ui build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.4",
     "@eslint/js": "^9.28.0",
     "eslint": "^9.28.0",
     "eslint-plugin-react-hooks": "^5.2.0",

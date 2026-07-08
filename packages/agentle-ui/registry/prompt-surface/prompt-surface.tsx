@@ -17,9 +17,16 @@ export function PromptSurface({ commands, disabled, onSubmit }: PromptSurfacePro
     addAttachment,
     removeAttachment,
     filteredCommands,
+    selectedCommandIndex,
+    activeCommand,
     handleKeyDown,
     submit,
   } = usePromptSurface({ commands, onSubmit, disabled });
+
+  const paletteOpen = filteredCommands.length > 0;
+  const activeDescendantId = paletteOpen && activeCommand
+    ? `agentle-command-${activeCommand.name}`
+    : undefined;
 
   return (
     <div className="agentle-prompt">
@@ -43,6 +50,10 @@ export function PromptSurface({ commands, disabled, onSubmit }: PromptSurfacePro
             placeholder="Ask anything..."
             disabled={disabled}
             rows={1}
+            role="combobox"
+            aria-expanded={paletteOpen}
+            aria-controls={paletteOpen ? "agentle-command-palette" : undefined}
+            aria-activedescendant={activeDescendantId}
           />
           <div className="agentle-prompt__actions">
             <label className="agentle-prompt__attach" aria-label="Attach files" title="Attach files">
@@ -80,7 +91,11 @@ export function PromptSurface({ commands, disabled, onSubmit }: PromptSurfacePro
           </div>
         </div>
       </div>
-      {filteredCommands.length > 0 ? <CommandPalette commands={filteredCommands} /> : null}
+      {paletteOpen ? (
+        <div id="agentle-command-palette">
+          <CommandPalette commands={filteredCommands} selectedIndex={selectedCommandIndex} />
+        </div>
+      ) : null}
     </div>
   );
 }

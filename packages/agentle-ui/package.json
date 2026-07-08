@@ -4,6 +4,30 @@
   "description": "A gentle UI for chaotic AI streams — headless hooks for AI-native presentation",
   "author": "edvardhov",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edvardhov/agentle-ui.git",
+    "directory": "packages/agentle-ui"
+  },
+  "homepage": "https://github.com/edvardhov/agentle-ui#readme",
+  "bugs": {
+    "url": "https://github.com/edvardhov/agentle-ui/issues"
+  },
+  "keywords": [
+    "react",
+    "ai",
+    "streaming",
+    "markdown",
+    "ui",
+    "hooks",
+    "agent",
+    "chatbot",
+    "llm"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -16,7 +40,9 @@
   },
   "files": [
     "dist",
-    "registry"
+    "registry",
+    "README.md",
+    "LICENSE"
   ],
   "bin": {
     "agentle-ui": "./dist/cli/index.js"

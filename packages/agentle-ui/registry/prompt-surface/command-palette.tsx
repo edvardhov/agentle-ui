@@ -2,15 +2,20 @@ import type { SlashCommand } from "agentle-ui";
 
 interface CommandPaletteProps {
   commands: SlashCommand[];
+  selectedIndex: number;
 }
 
-export function CommandPalette({ commands }: CommandPaletteProps) {
+export function CommandPalette({ commands, selectedIndex }: CommandPaletteProps) {
   return (
     <div className="agentle-prompt__palette" role="listbox">
-      {commands.map((command) => (
+      {commands.map((command, index) => (
         <button
           key={command.name}
+          id={`agentle-command-${command.name}`}
           type="button"
+          role="option"
+          aria-selected={index === selectedIndex}
+          data-active={index === selectedIndex ? "true" : undefined}
           className="agentle-prompt__command"
           onClick={command.action}
         >

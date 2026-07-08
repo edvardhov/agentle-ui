@@ -441,7 +441,8 @@
   text-align: left;
 }
 
-.agentle-prompt__command:hover {
+.agentle-prompt__command:hover,
+.agentle-prompt__command[data-active="true"] {
   background: var(--agentle-bg-subtle);
 }
 

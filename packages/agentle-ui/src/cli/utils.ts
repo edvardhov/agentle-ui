@@ -27,8 +27,21 @@ export interface RegistryComponent {
   files: Array<{ name: string; target: string; source?: string }>;
 }
 
-export function getProjectRoot(cwd = process.cwd()): string {
-  return cwd;
+export function getProjectRoot(startDir = process.cwd()): string {
+  let dir = resolve(startDir);
+
+  while (true) {
+    if (existsSync(join(dir, "package.json"))) {
+      return dir;
+    }
+
+    const parent = dirname(dir);
+    if (parent === dir) {
+      return resolve(startDir);
+    }
+
+    dir = parent;
+  }
 }
 
 export function getConfigPath(cwd = process.cwd()): string {

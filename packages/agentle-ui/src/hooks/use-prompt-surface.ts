@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import {
   DEFAULT_MAX_ATTACHMENTS,
   DEFAULT_MAX_FILE_SIZE_BYTES,
@@ -20,6 +20,7 @@ export interface UsePromptSurfaceResult {
   addAttachment: (file: File) => void;
   removeAttachment: (id: string) => void;
   activeCommand: SlashCommand | null;
+  selectedCommandIndex: number;
   filteredCommands: SlashCommand[];
   handleKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   submit: () => void | Promise<void>;
@@ -39,6 +40,7 @@ export function usePromptSurface(options: UsePromptSurfaceOptions = {}): UseProm
   const [attachments, setAttachments] = useState<PromptAttachment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commandQuery, setCommandQuery] = useState<string | null>(null);
+  const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
 
   const onSubmitRef = useRef(onSubmit);
   onSubmitRef.current = onSubmit;
@@ -49,7 +51,11 @@ export function usePromptSurface(options: UsePromptSurfaceOptions = {}): UseProm
     return commands.filter((command) => command.name.toLowerCase().includes(query));
   }, [commandQuery, commands]);
 
-  const activeCommand = filteredCommands[0] ?? null;
+  useEffect(() => {
+    setSelectedCommandIndex(0);
+  }, [commandQuery, filteredCommands.length]);
+
+  const activeCommand = filteredCommands[selectedCommandIndex] ?? null;
 
   const addAttachment = useCallback(
     (file: File) => {
@@ -104,14 +110,32 @@ export function usePromptSurface(options: UsePromptSurfaceOptions = {}): UseProm
     }
   }, [attachments, disabled, isSubmitting, text]);
 
+  const selectCommand = useCallback((command: SlashCommand) => {
+    command.action();
+    setText("");
+    setCommandQuery(null);
+  }, []);
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      const paletteOpen = commandQuery !== null && filteredCommands.length > 0;
+
+      if (paletteOpen && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+        event.preventDefault();
+        setSelectedCommandIndex((current) => {
+          if (filteredCommands.length === 0) return 0;
+          if (event.key === "ArrowDown") {
+            return (current + 1) % filteredCommands.length;
+          }
+          return (current - 1 + filteredCommands.length) % filteredCommands.length;
+        });
+        return;
+      }
+
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
-        if (activeCommand && commandQuery !== null) {
-          activeCommand.action();
-          setText("");
-          setCommandQuery(null);
+        if (paletteOpen && activeCommand) {
+          selectCommand(activeCommand);
           return;
         }
         submit();
@@ -122,22 +146,19 @@ export function usePromptSurface(options: UsePromptSurfaceOptions = {}): UseProm
         setCommandQuery(null);
       }
     },
-    [activeCommand, commandQuery, submit],
+    [activeCommand, commandQuery, filteredCommands.length, selectCommand, submit],
   );
 
-  const setTextWithCommands = useCallback(
-    (value: string) => {
-      setText(value);
+  const setTextWithCommands = useCallback((value: string) => {
+    setText(value);
 
-      const slashMatch = value.match(/(?:^|\s)\/([a-zA-Z0-9-_]*)$/);
-      if (slashMatch) {
-        setCommandQuery(slashMatch[1] ?? "");
-      } else {
-        setCommandQuery(null);
-      }
-    },
-    [],
-  );
+    const slashMatch = value.match(/(?:^|\s)\/([a-zA-Z0-9-_]*)$/);
+    if (slashMatch) {
+      setCommandQuery(slashMatch[1] ?? "");
+    } else {
+      setCommandQuery(null);
+    }
+  }, []);
 
   return {
     text,
@@ -146,6 +167,7 @@ export function usePromptSurface(options: UsePromptSurfaceOptions = {}): UseProm
     addAttachment,
     removeAttachment,
     activeCommand,
+    selectedCommandIndex,
     filteredCommands,
     handleKeyDown,
     submit,
