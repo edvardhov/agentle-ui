@@ -177,11 +177,22 @@ code {
   text-decoration: none;
 }
 
-.topbar__wordmark {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: -0.015em;
+.topbar__logo {
+  display: block;
+  height: 1.25rem;
+  width: auto;
+}
+
+.topbar__logo--dark {
+  display: none;
+}
+
+[data-theme="dark"] .topbar__logo--light {
+  display: none;
+}
+
+[data-theme="dark"] .topbar__logo--dark {
+  display: block;
 }
 
 .topbar__tag {

@@ -7,8 +7,21 @@ export function TopBar() {
 
   return (
     <header className="topbar">
-      <Link to="/" className="topbar__brand">
-        <span className="topbar__wordmark">agentle-ui</span>
+      <Link to="/" className="topbar__brand" aria-label="agentle-ui home">
+        <img
+          className="topbar__logo topbar__logo--light"
+          src="/brand/agentle-ui-light.svg"
+          alt="agentle ui"
+          width={110}
+          height={20}
+        />
+        <img
+          className="topbar__logo topbar__logo--dark"
+          src="/brand/agentle-ui-dark.svg"
+          alt="agentle ui"
+          width={110}
+          height={20}
+        />
         <span className="topbar__tag">v{PACKAGE_VERSION}</span>
       </Link>
       <div className="topbar__actions">

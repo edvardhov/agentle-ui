@@ -1,6 +1,11 @@
-# agentle-ui
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/agentle-ui-dark.svg" />
+    <img alt="agentle ui" src="assets/agentle-ui-light.svg" width="340" />
+  </picture>
+</p>
 
-**A gentle UI for chaotic AI streams.**
+<p align="center"><strong>A gentle UI for chaotic AI streams.</strong></p>
 
 Presentation primitives for AI-native applications. Zero vendor lock-in.
 
