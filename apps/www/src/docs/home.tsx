@@ -83,7 +83,9 @@ npx agentle-ui add markdown-stabilizer`}
       </AnchorHeading>
       <p className="doc-lead">
         Building on assistant-ui, the Vercel AI SDK, LangGraph, or your own SSE pipeline? Pass model
-        output into agentle-ui hooks or copy the styled templates wherever you render responses.
+        output into agentle-ui hooks or copy the styled templates wherever you render responses. See{" "}
+        <Link to="/recipes">integration recipes</Link> for source-specific glue, or the{" "}
+        <Link to="/example">example chat</Link> for all four pillars composed.
       </p>
     </>
   );

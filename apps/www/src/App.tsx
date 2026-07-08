@@ -5,8 +5,10 @@ import { ApiReferencePage } from "./docs/api-reference";
 import { CliPage } from "./docs/cli";
 import { ConceptsPage } from "./docs/concepts";
 import { GettingStartedPage } from "./docs/getting-started";
+import { ExamplePage } from "./docs/example";
 import { HomePage } from "./docs/home";
 import { MarkdownStabilizerPage } from "./docs/markdown-stabilizer";
+import { RecipesPage } from "./docs/recipes";
 import { PromptSurfacePage } from "./docs/prompt-surface";
 import { ThoughtVisualizerPage } from "./docs/thought-visualizer";
 import "./styles.css";
@@ -18,6 +20,8 @@ export default function App() {
         <Route index element={<HomePage />} />
         <Route path="getting-started" element={<GettingStartedPage />} />
         <Route path="concepts" element={<ConceptsPage />} />
+        <Route path="recipes" element={<RecipesPage />} />
+        <Route path="example" element={<ExamplePage />} />
         <Route path="markdown-stabilizer" element={<MarkdownStabilizerPage />} />
         <Route path="thought-visualizer" element={<ThoughtVisualizerPage />} />
         <Route path="action-card" element={<ActionCardPage />} />

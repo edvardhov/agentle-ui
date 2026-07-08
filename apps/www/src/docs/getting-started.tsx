@@ -68,7 +68,9 @@ npx agentle-ui add markdown-stabilizer`}
       </AnchorHeading>
       <p>
         Use hooks when you want full control over markup and styling. Each pillar has a headless hook
-        — see the <Link to="/api-reference#hooks">API reference</Link> for full signatures.
+        — see the <Link to="/api-reference#hooks">API reference</Link> for full signatures. For
+        wiring real model output into these hooks, see{" "}
+        <Link to="/recipes">Integration recipes</Link>.
       </p>
       <ul>
         {PILLARS.map((pillar) => (
@@ -104,7 +106,8 @@ export function Answer({ content, done }: { content: string; done: boolean }) {
       </AnchorHeading>
       <p>
         Copy a styled registry template into your repo with the CLI, then own the pixels. Each
-        component page covers install, usage, and live demos.
+        component page covers install, usage, and live demos. For a composed agent screen using all
+        four templates, see the <Link to="/example">Example chat</Link>.
       </p>
       <ul>
         {PILLARS.map((pillar) => (

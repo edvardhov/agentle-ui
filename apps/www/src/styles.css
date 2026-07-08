@@ -376,7 +376,6 @@ code {
 }
 
 /* Demo surfaces sit inside .doc-page but use dark component tokens */
-.live-demo,
 .live-demo__surface,
 .demo-panel,
 .pane-content,
@@ -385,16 +384,26 @@ code {
   color: var(--demo-text);
 }
 
-.live-demo p,
-.live-demo li,
-.live-demo h1,
-.live-demo h2,
-.live-demo h3,
-.live-demo h4,
-.live-demo td,
-.live-demo th,
-.live-demo blockquote,
-.live-demo strong,
+.live-demo__surface p,
+.live-demo__surface li,
+.live-demo__surface h1,
+.live-demo__surface h2,
+.live-demo__surface h3,
+.live-demo__surface h4,
+.live-demo__surface td,
+.live-demo__surface th,
+.live-demo__surface blockquote,
+.live-demo__surface strong,
+.demo-panel p,
+.demo-panel li,
+.demo-panel h1,
+.demo-panel h2,
+.demo-panel h3,
+.demo-panel h4,
+.demo-panel td,
+.demo-panel th,
+.demo-panel blockquote,
+.demo-panel strong,
 .pane-content p,
 .pane-content li,
 .pane-content h1,
@@ -409,7 +418,8 @@ code {
 }
 
 .pane-content blockquote,
-.live-demo blockquote {
+.live-demo__surface blockquote,
+.demo-panel blockquote {
   color: #a1a1aa;
 }
 
@@ -1154,6 +1164,212 @@ code {
   to {
     opacity: 1;
   }
+}
+
+.chat-example {
+  display: flex;
+  flex-direction: column;
+  min-height: 28rem;
+  background: var(--paper-elevated);
+  color: var(--ink);
+}
+
+.live-demo .chat-example,
+.live-demo .chat-example .pane-content.agentle-markdown {
+  color: var(--ink);
+}
+
+.chat-example .demo-empty {
+  color: var(--ink-faint);
+}
+
+.chat-example .agentle-thoughts,
+.chat-example .agentle-action-cards,
+.chat-example .agentle-prompt,
+.chat-example .pane-content.agentle-markdown {
+  --agentle-font: var(--font-body);
+  --agentle-font-mono: var(--font-mono);
+  --agentle-bg: var(--surface-muted);
+  --agentle-bg-subtle: var(--surface-hover);
+  --agentle-text: var(--ink);
+  --agentle-text-muted: var(--ink-muted);
+  --agentle-border: var(--line);
+  --agentle-accent: var(--accent);
+  --agentle-success: var(--success);
+  --agentle-error: var(--danger);
+}
+
+[data-theme="dark"] .chat-example .agentle-thoughts,
+[data-theme="dark"] .chat-example .agentle-action-cards,
+[data-theme="dark"] .chat-example .agentle-prompt,
+[data-theme="dark"] .chat-example .pane-content.agentle-markdown {
+  --agentle-bg: rgba(255, 255, 255, 0.04);
+  --agentle-bg-subtle: rgba(255, 255, 255, 0.07);
+  --agentle-success: var(--demo-metric-good);
+  --agentle-error: var(--demo-metric-bad);
+}
+
+.chat-example .pane-content.agentle-markdown {
+  min-height: 0;
+  padding: 0;
+}
+
+.chat-example .pane-content blockquote {
+  color: var(--ink-muted);
+}
+
+.chat-example__thread {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  overflow-y: auto;
+}
+
+.chat-example__empty {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 0.9rem;
+}
+
+.chat-example__message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.chat-example__message--user {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
+  color: var(--ink);
+}
+
+.chat-example__message--user p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: inherit;
+}
+
+.chat-example__message--assistant {
+  align-self: stretch;
+}
+
+.chat-example__role {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+.chat-example__block {
+  margin-top: 0.35rem;
+}
+
+.chat-example__block--answer {
+  margin-top: 0.65rem;
+}
+
+.chat-example__input {
+  border-top: 1px solid var(--line);
+  padding: 0.75rem;
+  background: var(--paper);
+}
+
+.chat-example .agentle-prompt__dropzone {
+  background: var(--surface-muted);
+  border-color: var(--line);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.chat-example .agentle-prompt__dropzone:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: var(--paper-elevated);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.chat-example .agentle-prompt__textarea::placeholder {
+  color: var(--ink-faint);
+}
+
+.chat-example .agentle-prompt__attach {
+  background: var(--surface-muted);
+  border-color: var(--line);
+  color: var(--ink-muted);
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.chat-example .agentle-prompt__attach:hover {
+  background: var(--surface-hover);
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.chat-example .agentle-prompt__submit:not(:disabled) {
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+}
+
+.chat-example .agentle-prompt__submit:not(:disabled):hover {
+  background: var(--accent-hover);
+}
+
+.chat-example .agentle-prompt__submit:disabled {
+  background: var(--surface-muted);
+  border-color: var(--line);
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.chat-example .agentle-prompt__command {
+  color: var(--ink);
+}
+
+.chat-example .agentle-prompt__palette {
+  background: var(--paper-elevated);
+  border-color: var(--line);
+}
+
+[data-theme="dark"] .chat-example__message--user {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--line);
+}
+
+[data-theme="dark"] .chat-example .agentle-prompt__dropzone {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .chat-example .agentle-prompt__dropzone:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 55%, rgba(255, 255, 255, 0.12));
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .chat-example .agentle-prompt__attach {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--ink-muted);
+}
+
+[data-theme="dark"] .chat-example .agentle-prompt__attach:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .chat-example .agentle-prompt__submit:disabled {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--ink-faint);
 }
 
 @media (max-width: 1100px) {

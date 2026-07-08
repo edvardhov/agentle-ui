@@ -18,6 +18,13 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: "Guides",
+    items: [
+      { label: "Recipes", path: "/recipes" },
+      { label: "Example chat", path: "/example" },
+    ],
+  },
+  {
     title: "Components",
     items: [
       { label: "Markdown Stabilizer", path: "/markdown-stabilizer" },
