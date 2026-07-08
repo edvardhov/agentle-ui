@@ -20,3 +20,39 @@ export interface MarkdownBlock {
   startOffset: number;
   endOffset: number;
 }
+
+export type ThoughtStepStatus = "active" | "complete" | "error";
+
+export interface ThoughtStep {
+  id: string;
+  label: string;
+  detail?: string;
+  status: ThoughtStepStatus;
+}
+
+export type AgentActionStatus = "running" | "success" | "error";
+
+export interface AgentAction {
+  id: string;
+  name: string;
+  status: AgentActionStatus;
+  input?: Record<string, unknown>;
+  output?: unknown;
+  error?: string;
+  startedAt?: number;
+  completedAt?: number;
+}
+
+export interface PromptAttachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  preview?: string;
+}
+
+export interface SlashCommand {
+  name: string;
+  description: string;
+  action: () => void;
+}

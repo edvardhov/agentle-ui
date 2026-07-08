@@ -1,0 +1,24 @@
+{
+  "name": "prompt-surface",
+  "type": "registry:component",
+  "description": "Intelligent input for human-AI interaction",
+  "dependencies": ["agentle-ui"],
+  "files": [
+    {
+      "name": "prompt-surface.tsx",
+      "target": "components/agentle/prompt-surface.tsx"
+    },
+    {
+      "name": "attachment-bar.tsx",
+      "target": "components/agentle/attachment-bar.tsx"
+    },
+    {
+      "name": "command-palette.tsx",
+      "target": "components/agentle/command-palette.tsx"
+    },
+    {
+      "name": "agentle.css",
+      "target": "components/agentle/agentle.css"
+    }
+  ]
+}

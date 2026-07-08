@@ -1,0 +1,24 @@
+{
+  "name": "thought-visualizer",
+  "type": "registry:component",
+  "description": "Shows what the agent is thinking or doing behind the scenes",
+  "dependencies": ["agentle-ui"],
+  "files": [
+    {
+      "name": "thought-visualizer.tsx",
+      "target": "components/agentle/thought-visualizer.tsx"
+    },
+    {
+      "name": "thought-step-row.tsx",
+      "target": "components/agentle/thought-step-row.tsx"
+    },
+    {
+      "name": "collapsed-summary.tsx",
+      "target": "components/agentle/collapsed-summary.tsx"
+    },
+    {
+      "name": "agentle.css",
+      "target": "components/agentle/agentle.css"
+    }
+  ]
+}
