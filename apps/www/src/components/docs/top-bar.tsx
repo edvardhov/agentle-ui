@@ -75,8 +75,10 @@ export function TopBar() {
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" className="theme-toggle__icon theme-toggle__icon--npm">
             <path
-              d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.64l.004-3.583H8.851v3.564H5.113z"
               fill="currentColor"
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M5 21C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V19C21 20.1046 20.1046 21 19 21H5ZM6 18V6H18V18H15V9H12V18H6Z"
             />
           </svg>
         </a>
