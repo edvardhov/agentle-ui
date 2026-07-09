@@ -53,7 +53,7 @@ jobs:
         run: npx --yes @lhci/cli@0.14.0 autorun --config=lighthouserc.json
 
       - name: Serve docs for accessibility scan
-        run: pnpm --filter @agentle-ui/www preview --host 127.0.0.1 --port 4173 &
+        run: pnpm --filter @agentle-ui/www preview:pages &
         shell: bash
 
       - name: Wait for docs server

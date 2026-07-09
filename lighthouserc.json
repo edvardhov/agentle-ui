@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "startServerCommand": "pnpm --filter @agentle-ui/www preview --host 127.0.0.1 --port 4173",
+      "startServerCommand": "pnpm --filter @agentle-ui/www preview:pages",
       "startServerReadyPattern": "Local:",
       "url": [
         "http://127.0.0.1:4173/agentle-ui/",
