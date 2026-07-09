@@ -1,5 +1,8 @@
 <p align="center">
-  <img alt="agentle ui" src="https://raw.githubusercontent.com/edvardhov/agentle-ui/main/assets/agentle-ui-light.svg" width="340" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/edvardhov/agentle-ui/main/assets/agentle-ui-dark.svg" />
+    <img alt="agentle ui" src="https://raw.githubusercontent.com/edvardhov/agentle-ui/main/assets/agentle-ui-light.svg" width="340" />
+  </picture>
 </p>
 
 <p align="center">

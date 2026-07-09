@@ -1,5 +1,11 @@
 # agentle-ui
 
+## 0.2.3
+
+### Patch Changes
+
+- Add theme-aware README logo for npm and GitHub dark mode.
+
 ## 0.2.2
 
 ### Patch Changes
