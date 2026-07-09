@@ -140,3 +140,68 @@ export function formatComponentImportPath(config: AgentleConfig, componentName: 
   const base = config.aliases.components.replace(/\/$/, "");
   return `${base}/agentle/${componentName}`;
 }
+
+function getAliasPathKey(alias: string): string {
+  const trimmed = alias.replace(/\/$/, "");
+  const slashIndex = trimmed.indexOf("/");
+  if (slashIndex === -1) {
+    return `${trimmed}/*`;
+  }
+  return `${trimmed.slice(0, slashIndex)}/*`;
+}
+
+export async function hasPathAlias(cwd: string, alias: string): Promise<boolean> {
+  const pathKey = getAliasPathKey(alias);
+  const configFiles = ["tsconfig.json", "jsconfig.json"];
+
+  for (const file of configFiles) {
+    const filePath = join(cwd, file);
+    if (!existsSync(filePath)) {
+      continue;
+    }
+
+    try {
+      const raw = await readFile(filePath, "utf8");
+      const config = JSON.parse(raw) as {
+        compilerOptions?: { paths?: Record<string, string[]> };
+      };
+      const paths = config.compilerOptions?.paths;
+      if (!paths) {
+        continue;
+      }
+
+      if (pathKey in paths) {
+        return true;
+      }
+
+      const aliasRoot = alias.split("/")[0];
+      if (aliasRoot && Object.keys(paths).some((key) => key.startsWith(aliasRoot))) {
+        return true;
+      }
+    } catch {
+      // ignore invalid JSON or unsupported config shapes
+    }
+  }
+
+  return false;
+}
+
+export function printPathAliasWarning(alias: string): void {
+  const pathKey = getAliasPathKey(alias);
+  console.warn(`\nWarning: no TypeScript path alias found for "${alias}".`);
+  console.warn("Copied components import from this alias. Add to tsconfig.json:\n");
+  console.warn(
+    JSON.stringify(
+      {
+        compilerOptions: {
+          baseUrl: ".",
+          paths: {
+            [pathKey]: ["./*"],
+          },
+        },
+      },
+      null,
+      2,
+    ),
+  );
+}

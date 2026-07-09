@@ -100,6 +100,32 @@ describe("useStabilizedMarkdown", () => {
     });
   });
 
+  it("fires onBlockRendered once per block for growing strings", async () => {
+    const rendered = new Map<string, number>();
+
+    const { rerender } = renderHook(({ content }) =>
+      useStabilizedMarkdown(content, {
+        onBlockRendered: (block) => {
+          rendered.set(block.id, (rendered.get(block.id) ?? 0) + 1);
+        },
+      }),
+      { initialProps: { content: "# Hello" } },
+    );
+
+    rerender({ content: "# Hello\n\nWorld grows" });
+
+    await waitFor(
+      () => {
+        expect(rendered.size).toBeGreaterThan(0);
+      },
+      { timeout: 200 },
+    );
+
+    for (const count of rendered.values()) {
+      expect(count).toBe(1);
+    }
+  });
+
   it("flushes after hook remount when stream completes", async () => {
     const broken = "# Broken code fence\n\n```typescript\nexport function incomplete() {\n  return \"still streaming\n";
 

@@ -115,6 +115,37 @@ describe("MarkdownCompletenessParser", () => {
     expect(replaced.some((b) => b.content.includes("Different"))).toBe(true);
     expect(replaced.some((b) => b.content.includes("Title"))).toBe(false);
   });
+
+  it("matches full parse when fed incrementally token-by-token", () => {
+    const fullText =
+      "# Title\n\nFirst paragraph.\n\nSecond paragraph continues here.\n\n```js\nconsole.log('hi')\n```";
+
+    const reference = new MarkdownCompletenessParser();
+    const expected = reference.parse(fullText, true);
+
+    const incremental = new MarkdownCompletenessParser();
+    let result = incremental.parse("", false);
+    for (let i = 1; i <= fullText.length; i++) {
+      result = incremental.parse(fullText.slice(0, i), i === fullText.length);
+    }
+
+    expect(result).toEqual(expected);
+  });
+
+  it("matches full parse for lazy paragraph continuation when fed incrementally", () => {
+    const fullText = "Opening line\nstill same paragraph\n\nNew block";
+
+    const reference = new MarkdownCompletenessParser();
+    const expected = reference.parse(fullText, true);
+
+    const incremental = new MarkdownCompletenessParser();
+    let result = incremental.parse("", false);
+    for (let i = 1; i <= fullText.length; i++) {
+      result = incremental.parse(fullText.slice(0, i), i === fullText.length);
+    }
+
+    expect(result).toEqual(expected);
+  });
 });
 
 describe("stream-input", () => {

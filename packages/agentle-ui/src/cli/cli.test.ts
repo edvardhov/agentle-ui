@@ -38,7 +38,17 @@ describe("CLI", () => {
     expect(getProjectRoot(nested)).toBe(tempDir);
   });
 
+  it("warns when the configured path alias is missing", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    await initCommand();
+
+    expect(warnSpy.mock.calls.flat().join("\n")).toContain("Warning: no TypeScript path alias found");
+    warnSpy.mockRestore();
+  });
+
   it("init writes agentle-ui.json and creates components directory", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     await initCommand();
 
     const configRaw = await readFile(join(tempDir, CONFIG_FILENAME), "utf8");
@@ -49,6 +59,7 @@ describe("CLI", () => {
 
     const { access } = await import("node:fs/promises");
     await expect(access(join(tempDir, "components", "agentle"))).resolves.toBeUndefined();
+    warnSpy.mockRestore();
   });
 
   it("add copies registry files and skips existing files without overwrite", async () => {

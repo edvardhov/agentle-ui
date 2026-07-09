@@ -54,6 +54,25 @@ function ensureStore(
   return storeRef.current;
 }
 
+function parseStringSnapshot(
+  text: string,
+  complete: boolean,
+  flushOnComplete: boolean,
+): InternalState {
+  const parser = new MarkdownCompletenessParser();
+  let blocks = parser.parse(text, complete);
+  if (complete && flushOnComplete) {
+    blocks = flushIncompleteBlocks(blocks);
+  }
+  const { renderedBlocks, pendingBlocks } = partitionBlocks(blocks);
+  return {
+    renderedBlocks,
+    pendingBlocks,
+    isStreaming: !complete,
+    isComplete: complete,
+  };
+}
+
 export function useStabilizedMarkdown(
   input: StreamInput,
   options: UseStabilizedMarkdownOptions = {},
@@ -75,15 +94,25 @@ export function useStabilizedMarkdown(
 
   const schedulerRef = useRef<PaintScheduler | null>(null);
   const storeRef = useRef<StreamStore<InternalState> | null>(null);
+  const seenRenderedIdsRef = useRef<Set<string>>(new Set());
+  const prevStringRef = useRef<string>("");
   ensureStore(schedulerRef, storeRef, debounceMs);
+
+  const inputKey = useMemo(() => getStreamInputKey(input), [input]);
+
+  const serverSnapshot = useMemo(() => {
+    if (typeof input !== "string") {
+      return EMPTY_STATE;
+    }
+    const complete = isCompleteOption ?? true;
+    return parseStringSnapshot(input, complete, flushOnComplete);
+  }, [input, inputKey, isCompleteOption, flushOnComplete]);
+  const inputRef = useRef(input);
+  inputRef.current = input;
 
   useEffect(() => {
     schedulerRef.current?.setDebounceMs(debounceMs);
   }, [debounceMs]);
-
-  const inputKey = useMemo(() => getStreamInputKey(input), [input]);
-  const inputRef = useRef(input);
-  inputRef.current = input;
 
   useEffect(() => {
     const parser = parserRef.current!;
@@ -91,7 +120,7 @@ export function useStabilizedMarkdown(
     const currentInput = inputRef.current;
 
     let buffer = "";
-    const seenRenderedIds = new Set<string>();
+    const seenRenderedIds = seenRenderedIdsRef.current;
 
     const commit = (complete: boolean) => {
       const activeStore = storeRef.current;
@@ -126,6 +155,14 @@ export function useStabilizedMarkdown(
     };
 
     if (typeof currentInput === "string") {
+      const prev = prevStringRef.current;
+      if (prev && currentInput.startsWith(prev)) {
+        // keep seenRenderedIds across growing-string updates
+      } else {
+        seenRenderedIds.clear();
+      }
+      prevStringRef.current = currentInput;
+
       parser.reset();
       buffer = currentInput;
 
@@ -140,6 +177,9 @@ export function useStabilizedMarkdown(
         clearTimeout(settleTimer);
       };
     }
+
+    seenRenderedIds.clear();
+    prevStringRef.current = "";
 
     parser.reset();
     store.update({
@@ -177,7 +217,7 @@ export function useStabilizedMarkdown(
     return storeRef.current?.getSnapshot() ?? EMPTY_STATE;
   }, []);
 
-  const getServerSnapshot = useCallback(() => EMPTY_STATE, []);
+  const getServerSnapshot = useCallback(() => serverSnapshot, [serverSnapshot]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
