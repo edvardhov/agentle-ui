@@ -126,14 +126,14 @@ export function MarkdownStabilizerDemo({
       <section className={`comparison${compact ? " comparison--compact" : ""}`} key={runId}>
         <article className="pane">
           <header className="pane-header">
-            <h3>Naive render</h3>
+            <h2 className="pane-header__title">Naive render</h2>
             <p className="metric">Layout shifts: {naiveShifts}</p>
           </header>
           <NaiveMarkdown content={content} isStreaming={isStreaming} />
         </article>
         <article className="pane">
           <header className="pane-header">
-            <h3>agentle-ui</h3>
+            <h2 className="pane-header__title">agentle-ui</h2>
             <p className="metric metric--good">Layout shifts: {gentleShifts}</p>
           </header>
           <GentleMarkdown content={content} isComplete={!isStreaming} />

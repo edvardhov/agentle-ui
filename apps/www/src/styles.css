@@ -10,6 +10,8 @@
   --line-strong: #d4d4d8;
   --accent: #6366f1;
   --accent-hover: #4f46e5;
+  --btn-primary-bg: #4f46e5;
+  --btn-primary-hover: #4338ca;
   --accent-soft: rgba(99, 102, 241, 0.12);
   --success: #22c55e;
   --success-soft: rgba(34, 197, 94, 0.12);
@@ -46,6 +48,8 @@
   --line-strong: rgba(255, 255, 255, 0.16);
   --accent: #818cf8;
   --accent-hover: #a5b4fc;
+  --btn-primary-bg: #4f46e5;
+  --btn-primary-hover: #4338ca;
   --accent-soft: rgba(129, 140, 248, 0.16);
   --success: #86efac;
   --success-soft: rgba(134, 239, 172, 0.12);
@@ -521,12 +525,12 @@ code {
 }
 
 .btn--primary {
-  background: var(--accent);
+  background: var(--btn-primary-bg);
   color: white;
 }
 
 .btn--primary:hover {
-  background: var(--accent-hover);
+  background: var(--btn-primary-hover);
 }
 
 .btn--ghost {
@@ -939,9 +943,10 @@ code {
   border-bottom: 1px solid var(--demo-border);
 }
 
-.pane-header h3 {
+.pane-header__title {
   margin: 0;
   font-size: 0.92rem;
+  font-weight: 600;
   color: var(--demo-text);
 }
 
