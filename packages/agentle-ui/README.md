@@ -11,11 +11,24 @@
 
 <p align="center"><strong>A gentle UI for chaotic AI streams.</strong></p>
 
-Headless React hooks and copy-paste templates for AI-native presentation. Zero vendor lock-in — accepts raw strings or streams from any backend.
+<p align="center">
+  Headless React hooks and copy-paste templates for AI-native presentation.<br />
+  Zero vendor lock-in — accepts raw strings or streams from any backend.
+</p>
 
-**Node.js >= 18** · **React >= 18** · **ESM + CJS**
+<p align="center">
+  <strong>Node.js &gt;= 18</strong> &nbsp;·&nbsp; <strong>React &gt;= 18</strong> &nbsp;·&nbsp; <strong>ESM + CJS</strong>
+</p>
 
-[Documentation](https://edvardhov.github.io/agentle-ui) · [npm](https://www.npmjs.com/package/agentle-ui) · [GitHub](https://github.com/edvardhov/agentle-ui)
+<p align="center">
+  <a href="https://edvardhov.github.io/agentle-ui">Documentation</a>
+  &nbsp;·&nbsp;
+  <a href="https://www.npmjs.com/package/agentle-ui">npm</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/edvardhov/agentle-ui">GitHub</a>
+</p>
+
+<br />
 
 ## Install
 
