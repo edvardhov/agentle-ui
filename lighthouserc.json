@@ -4,8 +4,8 @@
       "startServerCommand": "pnpm --filter @agentle-ui/www preview --host 127.0.0.1 --port 4173",
       "startServerReadyPattern": "Local:",
       "url": [
-        "http://127.0.0.1:4173/",
-        "http://127.0.0.1:4173/example"
+        "http://127.0.0.1:4173/agentle-ui/",
+        "http://127.0.0.1:4173/agentle-ui/example"
       ],
       "numberOfRuns": 1
     },

@@ -10,14 +10,14 @@ export function TopBar() {
       <Link to="/" className="topbar__brand" aria-label="agentle-ui home">
         <img
           className="topbar__logo topbar__logo--light"
-          src="/brand/agentle-ui-light.svg"
+          src={`${import.meta.env.BASE_URL}brand/agentle-ui-light.svg`}
           alt="agentle ui"
           width={110}
           height={20}
         />
         <img
           className="topbar__logo topbar__logo--dark"
-          src="/brand/agentle-ui-dark.svg"
+          src={`${import.meta.env.BASE_URL}brand/agentle-ui-dark.svg`}
           alt="agentle ui"
           width={110}
           height={20}

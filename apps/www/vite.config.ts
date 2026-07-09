@@ -21,7 +21,8 @@ function resolveRegistryCss(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "/agentle-ui/" : "/",
   plugins: [react(), resolveRegistryCss()],
   define: {
     __AGENTLE_UI_VERSION__: JSON.stringify(packageJson.version),
@@ -34,4 +35,4 @@ export default defineConfig({
       { find: "remark-gfm", replacement: resolve(__dirname, "node_modules/remark-gfm") },
     ],
   },
-});
+}));

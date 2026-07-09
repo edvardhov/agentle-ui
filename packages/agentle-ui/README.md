@@ -2,6 +2,13 @@
   <img alt="agentle ui" src="https://raw.githubusercontent.com/edvardhov/agentle-ui/main/assets/agentle-ui-light.svg" width="340" />
 </p>
 
+<p align="center">
+  <a href="https://www.npmjs.com/package/agentle-ui"><img src="https://img.shields.io/npm/v/agentle-ui.svg" alt="npm version" /></a>
+  <a href="https://github.com/edvardhov/agentle-ui/actions/workflows/ci.yml"><img src="https://github.com/edvardhov/agentle-ui/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+  <a href="https://github.com/edvardhov/agentle-ui/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/agentle-ui.svg" alt="license" /></a>
+  <a href="https://bundlephobia.com/package/agentle-ui"><img src="https://img.shields.io/bundlephobia/minzip/agentle-ui" alt="bundle size" /></a>
+</p>
+
 <p align="center"><strong>A gentle UI for chaotic AI streams.</strong></p>
 
 Headless React hooks and copy-paste templates for AI-native presentation. Zero vendor lock-in — accepts raw strings or streams from any backend.
@@ -102,7 +109,7 @@ Also exported for custom integrations:
 
 ## Documentation
 
-Full docs, live demos, and integration recipes: [github.com/edvardhov/agentle-ui](https://github.com/edvardhov/agentle-ui)
+Full docs, live demos, and integration recipes: [edvardhov.github.io/agentle-ui](https://edvardhov.github.io/agentle-ui)
 
 ## License
 

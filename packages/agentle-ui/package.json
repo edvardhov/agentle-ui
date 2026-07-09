@@ -9,7 +9,7 @@
     "url": "git+https://github.com/edvardhov/agentle-ui.git",
     "directory": "packages/agentle-ui"
   },
-  "homepage": "https://github.com/edvardhov/agentle-ui#readme",
+  "homepage": "https://edvardhov.github.io/agentle-ui",
   "bugs": {
     "url": "https://github.com/edvardhov/agentle-ui/issues"
   },
