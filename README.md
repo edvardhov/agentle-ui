@@ -5,11 +5,20 @@
   </picture>
 </p>
 
+<p align="center">
+  <a href="https://www.npmjs.com/package/agentle-ui"><img src="https://img.shields.io/npm/v/agentle-ui.svg" alt="npm version" /></a>
+  <a href="https://github.com/edvardhov/agentle-ui/actions/workflows/ci.yml"><img src="https://github.com/edvardhov/agentle-ui/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+  <a href="https://github.com/edvardhov/agentle-ui/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/agentle-ui.svg" alt="license" /></a>
+  <a href="https://bundlephobia.com/package/agentle-ui"><img src="https://img.shields.io/badge/gzipped-5.34%20kB-blue" alt="bundle size" /></a>
+</p>
+
 <p align="center"><strong>A gentle UI for chaotic AI streams.</strong></p>
 
-Presentation primitives for AI-native applications. Zero vendor lock-in.
+Headless React hooks and copy-paste templates for AI-native presentation. Zero vendor lock-in — accepts raw strings or streams from any backend.
 
-`agentle-ui` is the polish layer between chaotic AI output and a calm, premium UI. It does not manage chat state, model routing, or backends. It accepts raw strings or streams and makes them feel stable.
+**Node.js >= 18** · **React >= 18** · **ESM + CJS**
+
+[Documentation](https://edvardhov.github.io/agentle-ui) · [npm](https://www.npmjs.com/package/agentle-ui) · [GitHub](https://github.com/edvardhov/agentle-ui)
 
 ## Install
 
@@ -50,16 +59,16 @@ import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
 
 ## Pillars
 
-| Component           | Status | Description                                                |
-| ------------------- | ------ | ---------------------------------------------------------- |
-| Markdown Stabilizer | v0.1   | Buffers incomplete markdown blocks to prevent layout shift |
-| Thought Visualizer  | v0.5   | Shows what the agent is doing instead of a spinner         |
-| Action Card         | v0.5   | Transparent tool-call UI for agentic actions               |
-| Prompt Surface      | v0.5   | Multi-line input with attachments and slash commands       |
+| Component | Description |
+| --- | --- |
+| Markdown Stabilizer | Buffers incomplete markdown blocks to prevent layout shift |
+| Thought Visualizer | Shows what the agent is doing instead of a spinner |
+| Action Card | Transparent tool-call UI for agentic actions |
+| Prompt Surface | Multi-line input with attachments and slash commands |
 
 ## Bundle size
 
-Core hooks: **< 15 KB** gzipped (enforced by `size-limit` in CI).
+Core hooks: **5.34 KB** gzipped, under a **15 KB** CI budget (`size-limit`).
 
 ## Monorepo
 
@@ -75,11 +84,15 @@ pnpm dev
 
 ## Documentation
 
+Live docs, demos, and integration recipes: [edvardhov.github.io/agentle-ui](https://edvardhov.github.io/agentle-ui)
+
+Package on npm: [npmjs.com/package/agentle-ui](https://www.npmjs.com/package/agentle-ui)
+
+For local development:
+
 ```bash
 pnpm dev
 ```
-
-Open the local docs site for getting started guides, API reference, CLI docs, and live demos for all four pillars.
 
 ## License
 
