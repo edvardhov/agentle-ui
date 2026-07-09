@@ -44,3 +44,5 @@ export const NAV_SECTIONS: NavSection[] = [
 
 export const PACKAGE_VERSION = __AGENTLE_UI_VERSION__;
 export const GITHUB_URL = "https://github.com/edvardhov/agentle-ui";
+export const NPM_URL = "https://www.npmjs.com/package/agentle-ui";
+export const NPM_VERSION_URL = `https://www.npmjs.com/package/agentle-ui/v/${__AGENTLE_UI_VERSION__}`;

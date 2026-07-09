@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../../hooks/use-theme";
-import { GITHUB_URL, PACKAGE_VERSION } from "./nav";
+import { GITHUB_URL, NPM_URL, NPM_VERSION_URL, PACKAGE_VERSION } from "./nav";
 
 export function TopBar() {
   const { theme, toggleTheme } = useTheme();
@@ -22,7 +22,16 @@ export function TopBar() {
           width={110}
           height={20}
         />
-        <span className="topbar__tag">v{PACKAGE_VERSION}</span>
+        <a
+          href={NPM_VERSION_URL}
+          className="topbar__tag"
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`agentle-ui v${PACKAGE_VERSION} on npm`}
+          title="View on npm"
+        >
+          v{PACKAGE_VERSION}
+        </a>
       </Link>
       <div className="topbar__actions">
         <button
@@ -56,6 +65,21 @@ export function TopBar() {
             </svg>
           )}
         </button>
+        <a
+          href={NPM_URL}
+          className="theme-toggle"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="View on npm"
+          title="npm"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="theme-toggle__icon theme-toggle__icon--npm">
+            <path
+              d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.64l.004-3.583H8.851v3.564H5.113z"
+              fill="currentColor"
+            />
+          </svg>
+        </a>
         <a
           href={GITHUB_URL}
           className="theme-toggle"

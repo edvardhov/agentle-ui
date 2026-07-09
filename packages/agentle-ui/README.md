@@ -15,6 +15,8 @@ Headless React hooks and copy-paste templates for AI-native presentation. Zero v
 
 **Node.js >= 18** · **React >= 18** · **ESM + CJS**
 
+[Documentation](https://edvardhov.github.io/agentle-ui) · [npm](https://www.npmjs.com/package/agentle-ui) · [GitHub](https://github.com/edvardhov/agentle-ui)
+
 ## Install
 
 ```bash
@@ -110,6 +112,8 @@ Also exported for custom integrations:
 ## Documentation
 
 Full docs, live demos, and integration recipes: [edvardhov.github.io/agentle-ui](https://edvardhov.github.io/agentle-ui)
+
+Package on npm: [npmjs.com/package/agentle-ui](https://www.npmjs.com/package/agentle-ui)
 
 ## License
 

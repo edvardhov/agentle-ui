@@ -175,7 +175,8 @@ code {
   height: 1rem;
 }
 
-.theme-toggle__icon--github {
+.theme-toggle__icon--github,
+.theme-toggle__icon--npm {
   width: 1.15rem;
   height: 1.15rem;
 }
@@ -211,6 +212,17 @@ code {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.15rem 0.5rem;
+  text-decoration: none;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease;
+}
+
+.topbar__tag:hover {
+  color: var(--accent);
+  border-color: var(--accent-soft);
+  background: var(--accent-soft);
 }
 
 .doc-shell__body {
