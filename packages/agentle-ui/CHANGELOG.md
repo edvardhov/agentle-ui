@@ -1,5 +1,11 @@
 # agentle-ui
 
+## 0.2.1
+
+### Patch Changes
+
+- Update homepage and README links
+
 ## 0.2.0
 
 ### Minor Changes
