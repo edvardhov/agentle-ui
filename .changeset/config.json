@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@agentle-ui/www", "agentle-ui-monorepo"]
+  "ignore": ["@agentle-ui/www"]
 }

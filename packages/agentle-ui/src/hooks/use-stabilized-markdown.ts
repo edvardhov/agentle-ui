@@ -106,7 +106,7 @@ export function useStabilizedMarkdown(
     }
     const complete = isCompleteOption ?? true;
     return parseStringSnapshot(input, complete, flushOnComplete);
-  }, [input, inputKey, isCompleteOption, flushOnComplete]);
+  }, [input, isCompleteOption, flushOnComplete]);
   const inputRef = useRef(input);
   inputRef.current = input;
 
