@@ -1,5 +1,11 @@
 # agentle-ui
 
+## 0.2.2
+
+### Patch Changes
+
+- patch: fix README bundle badge
+
 ## 0.2.1
 
 ### Patch Changes

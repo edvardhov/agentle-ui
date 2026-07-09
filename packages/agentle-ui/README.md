@@ -6,7 +6,7 @@
   <a href="https://www.npmjs.com/package/agentle-ui"><img src="https://img.shields.io/npm/v/agentle-ui.svg" alt="npm version" /></a>
   <a href="https://github.com/edvardhov/agentle-ui/actions/workflows/ci.yml"><img src="https://github.com/edvardhov/agentle-ui/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
   <a href="https://github.com/edvardhov/agentle-ui/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/agentle-ui.svg" alt="license" /></a>
-  <a href="https://bundlephobia.com/package/agentle-ui"><img src="https://img.shields.io/bundlephobia/minzip/agentle-ui" alt="bundle size" /></a>
+  <a href="https://bundlephobia.com/package/agentle-ui"><img src="https://img.shields.io/badge/gzipped-5.34%20kB-blue" alt="bundle size" /></a>
 </p>
 
 <p align="center"><strong>A gentle UI for chaotic AI streams.</strong></p>
