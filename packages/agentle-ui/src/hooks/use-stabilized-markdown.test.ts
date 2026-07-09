@@ -3,14 +3,39 @@ import { describe, expect, it } from "vitest";
 import { useStabilizedMarkdown } from "../hooks/use-stabilized-markdown";
 
 describe("useStabilizedMarkdown", () => {
-  it("returns stable blocks for complete string input", () => {
+  it("returns stable blocks for complete string input after settle", async () => {
     const { result } = renderHook(() =>
       useStabilizedMarkdown("# Hello\n\nWorld"),
     );
 
-    expect(result.current.isComplete).toBe(true);
+    await waitFor(() => {
+      expect(result.current.isComplete).toBe(true);
+    });
+
     expect(result.current.renderedBlocks.length).toBeGreaterThan(0);
     expect(result.current.pendingBlocks).toHaveLength(0);
+  });
+
+  it("auto-detects growing strings and keeps incomplete code fence pending until settle", async () => {
+    const broken = "```typescript\nconst x = 1;\n";
+
+    const { result, rerender } = renderHook(({ content }) => useStabilizedMarkdown(content), {
+      initialProps: { content: broken.slice(0, 10) },
+    });
+
+    expect(result.current.isStreaming).toBe(true);
+    expect(result.current.pendingBlocks.some((b) => b.type === "code_fence")).toBe(true);
+
+    rerender({ content: broken });
+
+    await waitFor(
+      () => {
+        expect(result.current.isComplete).toBe(true);
+        expect(result.current.pendingBlocks).toHaveLength(0);
+        expect(result.current.renderedBlocks.some((b) => b.type === "code_fence")).toBe(true);
+      },
+      { timeout: 200 },
+    );
   });
 
   it("keeps incomplete code fence in pending during stream", async () => {

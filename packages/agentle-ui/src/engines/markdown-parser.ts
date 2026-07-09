@@ -40,74 +40,21 @@ export class MarkdownCompletenessParser {
       return this.state.blocks;
     }
 
-    const working = text;
-    const lines = working.split("\n");
-    const blocks: MarkdownBlock[] = [];
-    let offset = 0;
-    let index = 0;
-
-    while (index < lines.length) {
-      const line = lines[index] ?? "";
-      const lineStart = offset;
-      const lineEnd = offset + line.length;
-
-      if (line.trim() === "") {
-        offset = lineEnd + 1;
-        index += 1;
-        continue;
-      }
-
-      if (/^```/.test(line)) {
-        const fenceResult = parseCodeFence(lines, index, lineStart);
-        blocks.push(fenceResult.block);
-        index = fenceResult.nextIndex;
-        offset = fenceResult.nextOffset;
-        continue;
-      }
-
-      if (HEADING_PATTERN.test(line)) {
-        blocks.push(createBlock("heading", sliceLines(lines, index, index + 1), lineStart, lineEnd));
-        offset = lineEnd + 1;
-        index += 1;
-        continue;
-      }
-
-      if (/^>\s?/.test(line)) {
-        const quoteResult = parseBlockquote(lines, index, lineStart);
-        blocks.push(quoteResult.block);
-        index = quoteResult.nextIndex;
-        offset = quoteResult.nextOffset;
-        continue;
-      }
-
-      if (isTableStart(lines, index)) {
-        const tableResult = parseTable(lines, index, lineStart, streamComplete && index >= lines.length - 1);
-        blocks.push(tableResult.block);
-        index = tableResult.nextIndex;
-        offset = tableResult.nextOffset;
-        continue;
-      }
-
-      if (THEMATIC_BREAK_PATTERN.test(line.trim())) {
-        blocks.push(createBlock("thematic_break", line, lineStart, lineEnd, "stable"));
-        offset = lineEnd + 1;
-        index += 1;
-        continue;
-      }
-
-      if (/^(\s*)([-*+]|\d+\.)\s/.test(line)) {
-        const listResult = parseList(lines, index, lineStart, streamComplete);
-        blocks.push(listResult.block);
-        index = listResult.nextIndex;
-        offset = listResult.nextOffset;
-        continue;
-      }
-
-      const paragraphResult = parseParagraph(lines, index, lineStart);
-      blocks.push(paragraphResult.block);
-      index = paragraphResult.nextIndex;
-      offset = paragraphResult.nextOffset;
+    if (this.lastText.length > 0 && text !== this.lastText && !text.startsWith(this.lastText)) {
+      this.reset();
     }
+
+    const isPrefixExtension = this.lastText.length > 0 && text.startsWith(this.lastText);
+    let prefixBlocks: MarkdownBlock[] = [];
+    let parseFromOffset = 0;
+
+    if (isPrefixExtension && this.state.blocks.length > 0) {
+      prefixBlocks = this.state.blocks.slice(0, -1);
+      parseFromOffset = this.state.blocks[this.state.blocks.length - 1]!.startOffset;
+    }
+
+    const tailBlocks = parseBlocksFrom(text, parseFromOffset, streamComplete);
+    const blocks = parseFromOffset === 0 ? tailBlocks : [...prefixBlocks, ...tailBlocks];
 
     this.state.blocks = blocks;
     this.state.parsedUpTo = text.length;
@@ -115,6 +62,100 @@ export class MarkdownCompletenessParser {
     this.lastStreamComplete = streamComplete;
     return blocks;
   }
+}
+
+function lineIndexAtOffset(text: string, targetOffset: number): number {
+  if (targetOffset === 0) return 0;
+
+  const lines = text.split("\n");
+  let offset = 0;
+
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index] ?? "";
+    const lineEnd = offset + line.length;
+    if (targetOffset <= lineEnd) {
+      return index;
+    }
+    offset = lineEnd + 1;
+  }
+
+  return lines.length;
+}
+
+function parseBlocksFrom(
+  text: string,
+  startOffset: number,
+  streamComplete: boolean,
+): MarkdownBlock[] {
+  const lines = text.split("\n");
+  const blocks: MarkdownBlock[] = [];
+  let offset = startOffset;
+  let index = lineIndexAtOffset(text, startOffset);
+
+  while (index < lines.length) {
+    const line = lines[index] ?? "";
+    const lineStart = offset;
+    const lineEnd = offset + line.length;
+
+    if (line.trim() === "") {
+      offset = lineEnd + 1;
+      index += 1;
+      continue;
+    }
+
+    if (/^```/.test(line)) {
+      const fenceResult = parseCodeFence(lines, index, lineStart);
+      blocks.push(fenceResult.block);
+      index = fenceResult.nextIndex;
+      offset = fenceResult.nextOffset;
+      continue;
+    }
+
+    if (HEADING_PATTERN.test(line)) {
+      blocks.push(createBlock("heading", sliceLines(lines, index, index + 1), lineStart, lineEnd));
+      offset = lineEnd + 1;
+      index += 1;
+      continue;
+    }
+
+    if (/^>\s?/.test(line)) {
+      const quoteResult = parseBlockquote(lines, index, lineStart);
+      blocks.push(quoteResult.block);
+      index = quoteResult.nextIndex;
+      offset = quoteResult.nextOffset;
+      continue;
+    }
+
+    if (isTableStart(lines, index)) {
+      const tableResult = parseTable(lines, index, lineStart, streamComplete && index >= lines.length - 1);
+      blocks.push(tableResult.block);
+      index = tableResult.nextIndex;
+      offset = tableResult.nextOffset;
+      continue;
+    }
+
+    if (THEMATIC_BREAK_PATTERN.test(line.trim())) {
+      blocks.push(createBlock("thematic_break", line, lineStart, lineEnd, "stable"));
+      offset = lineEnd + 1;
+      index += 1;
+      continue;
+    }
+
+    if (/^(\s*)([-*+]|\d+\.)\s/.test(line)) {
+      const listResult = parseList(lines, index, lineStart, streamComplete);
+      blocks.push(listResult.block);
+      index = listResult.nextIndex;
+      offset = listResult.nextOffset;
+      continue;
+    }
+
+    const paragraphResult = parseParagraph(lines, index, lineStart);
+    blocks.push(paragraphResult.block);
+    index = paragraphResult.nextIndex;
+    offset = paragraphResult.nextOffset;
+  }
+
+  return blocks;
 }
 
 function createBlock(

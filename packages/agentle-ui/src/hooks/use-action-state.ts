@@ -2,6 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DURATION_MS_THRESHOLD } from "../constants";
 import type { AgentAction } from "../types";
 
+export interface UseActionStateOptions {
+  /** Interval for live duration updates while actions are running. Default: 500 */
+  tickMs?: number;
+}
+
 export interface UseActionStateResult {
   actions: AgentAction[];
   runningCount: number;
@@ -20,7 +25,11 @@ function getActionKey(action: AgentAction | AgentAction[]): string {
     .join("|");
 }
 
-export function useActionState(action: AgentAction | AgentAction[]): UseActionStateResult {
+export function useActionState(
+  action: AgentAction | AgentAction[],
+  options: UseActionStateOptions = {},
+): UseActionStateResult {
+  const tickMs = options.tickMs ?? 500;
   const actionRef = useRef(action);
   actionRef.current = action;
   const actionKey = getActionKey(action);
@@ -37,6 +46,7 @@ export function useActionState(action: AgentAction | AgentAction[]): UseActionSt
     new Map(),
   );
   const [timestampVersion, setTimestampVersion] = useState(0);
+  const [tickVersion, setTickVersion] = useState(0);
 
   useEffect(() => {
     let changed = false;
@@ -102,14 +112,27 @@ export function useActionState(action: AgentAction | AgentAction[]): UseActionSt
 
   const isExpanded = useCallback((id: string) => Boolean(expanded[id]), [expanded]);
 
-  const formatDuration = useCallback((item: AgentAction) => {
-    if (item.startedAt == null || item.completedAt == null) return "";
-    const ms = item.completedAt - item.startedAt;
-    if (ms < DURATION_MS_THRESHOLD) return `${ms}ms`;
-    return `${(ms / DURATION_MS_THRESHOLD).toFixed(1)}s`;
-  }, []);
-
   const runningCount = actions.filter((item) => item.status === "running").length;
+
+  useEffect(() => {
+    if (runningCount === 0) return;
+    const intervalId = setInterval(() => {
+      setTickVersion((version) => version + 1);
+    }, tickMs);
+    return () => clearInterval(intervalId);
+  }, [runningCount, tickMs]);
+
+  const formatDuration = useCallback(
+    (item: AgentAction) => {
+      void tickVersion;
+      if (item.startedAt == null) return "";
+      const end = item.completedAt ?? Date.now();
+      const ms = end - item.startedAt;
+      if (ms < DURATION_MS_THRESHOLD) return `${ms}ms`;
+      return `${(ms / DURATION_MS_THRESHOLD).toFixed(1)}s`;
+    },
+    [tickVersion],
+  );
 
   return {
     actions,

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/edvardhov/agentle-ui/packages/agentle-ui/registry/config.schema.json",
+  "title": "agentle-ui configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["style", "rsc", "tsx", "aliases"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "style": {
+      "type": "string",
+      "description": "Registry style preset"
+    },
+    "rsc": {
+      "type": "boolean",
+      "description": "Whether copied components should use React Server Components patterns"
+    },
+    "tsx": {
+      "type": "boolean",
+      "description": "Whether copied components use TypeScript"
+    },
+    "aliases": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["components", "utils"],
+      "properties": {
+        "components": {
+          "type": "string",
+          "description": "Import alias prefix for components (e.g. @/components)"
+        },
+        "utils": {
+          "type": "string",
+          "description": "Import alias prefix for utilities (e.g. @/lib/utils)"
+        }
+      }
+    }
+  }
+}

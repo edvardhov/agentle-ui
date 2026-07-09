@@ -11,9 +11,11 @@ import type { MarkdownBlock, StreamInput } from "../types";
 
 export interface UseStabilizedMarkdownOptions {
   debounceMs?: number;
+  /** Idle time before auto-detected string streams are treated as complete. Defaults to debounceMs. */
+  settleMs?: number;
   flushOnComplete?: boolean;
   onBlockRendered?: (block: MarkdownBlock) => void;
-  /** When using string input, set false while tokens are still arriving. Default: true */
+  /** When using string input, set false while tokens are still arriving. Omit to auto-detect streaming. */
   isComplete?: boolean;
 }
 
@@ -56,7 +58,13 @@ export function useStabilizedMarkdown(
   input: StreamInput,
   options: UseStabilizedMarkdownOptions = {},
 ): StabilizedMarkdownState {
-  const { debounceMs = DEFAULT_DEBOUNCE_MS, flushOnComplete = true, onBlockRendered, isComplete = true } = options;
+  const {
+    debounceMs = DEFAULT_DEBOUNCE_MS,
+    flushOnComplete = true,
+    onBlockRendered,
+    isComplete: isCompleteOption,
+  } = options;
+  const settleMs = options.settleMs ?? debounceMs;
   const onBlockRenderedRef = useRef(onBlockRendered);
   onBlockRenderedRef.current = onBlockRendered;
 
@@ -120,8 +128,17 @@ export function useStabilizedMarkdown(
     if (typeof currentInput === "string") {
       parser.reset();
       buffer = currentInput;
-      commit(isComplete);
-      return;
+
+      if (isCompleteOption !== undefined) {
+        commit(isCompleteOption);
+        return;
+      }
+
+      commit(false);
+      const settleTimer = setTimeout(() => commit(true), settleMs);
+      return () => {
+        clearTimeout(settleTimer);
+      };
     }
 
     parser.reset();
@@ -140,7 +157,7 @@ export function useStabilizedMarkdown(
     return () => {
       unsubscribe();
     };
-  }, [debounceMs, inputKey, flushOnComplete, isComplete]);
+  }, [debounceMs, inputKey, flushOnComplete, isCompleteOption, settleMs]);
 
   useEffect(() => {
     return () => {

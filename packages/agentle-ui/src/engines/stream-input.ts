@@ -1,5 +1,13 @@
-import { INPUT_KEY_FINGERPRINT_LENGTH } from "../constants";
 import type { StreamInput } from "../types";
+
+function hashString(value: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
 
 export type StreamUnsubscribe = () => void;
 export type StreamListener = (chunk: string, done: boolean) => void;
@@ -45,7 +53,7 @@ export function subscribeToStreamInput(
 
 export function getStreamInputKey(input: StreamInput): string {
   if (typeof input === "string") {
-    return `string:${input.length}:${input.slice(0, INPUT_KEY_FINGERPRINT_LENGTH)}`;
+    return `string:${input.length}:${hashString(input)}`;
   }
   if (isReadableStream(input)) {
     return `stream:readable:${getStreamObjectId(input)}`;

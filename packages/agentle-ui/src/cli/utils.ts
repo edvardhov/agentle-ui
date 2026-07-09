@@ -85,9 +85,10 @@ export async function copyRegistryFile(
 }
 
 export async function listRegistryComponents(): Promise<string[]> {
+  const excluded = new Set(["schema.json", "config.schema.json", "default-config.json"]);
   const entries = await readdir(REGISTRY_ROOT);
   return entries
-    .filter((entry) => entry.endsWith(".json") && entry !== "schema.json")
+    .filter((entry) => entry.endsWith(".json") && !excluded.has(entry))
     .map((entry) => entry.replace(/\.json$/, ""))
     .sort();
 }
@@ -107,8 +108,8 @@ export function detectPackageManager(cwd: string): "pnpm" | "npm" | "yarn" {
 export async function installDependencies(
   cwd: string,
   deps: string[],
-): Promise<void> {
-  if (deps.length === 0) return;
+): Promise<boolean> {
+  if (deps.length === 0) return true;
 
   const pm = detectPackageManager(cwd);
   const { execSync } = await import("node:child_process");
@@ -119,11 +120,23 @@ export async function installDependencies(
         ? `yarn add ${deps.join(" ")}`
         : `npm install ${deps.join(" ")}`;
 
-  execSync(cmd, { cwd, stdio: "inherit" });
+  try {
+    execSync(cmd, { cwd, stdio: "inherit" });
+    return true;
+  } catch {
+    console.warn("\nDependency install failed. Run manually:");
+    console.warn(`  ${cmd}`);
+    return false;
+  }
 }
 
 export async function getDefaultConfig(): Promise<AgentleConfig> {
-  const schemaPath = join(REGISTRY_ROOT, "schema.json");
-  const raw = await readFile(schemaPath, "utf8");
+  const configPath = join(REGISTRY_ROOT, "default-config.json");
+  const raw = await readFile(configPath, "utf8");
   return JSON.parse(raw) as AgentleConfig;
+}
+
+export function formatComponentImportPath(config: AgentleConfig, componentName: string): string {
+  const base = config.aliases.components.replace(/\/$/, "");
+  return `${base}/agentle/${componentName}`;
 }

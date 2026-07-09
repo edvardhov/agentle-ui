@@ -24,11 +24,14 @@ export type {
 export { useThoughtStream } from "./hooks/use-thought-stream";
 export type { UseThoughtStreamOptions, ThoughtStreamState } from "./hooks/use-thought-stream";
 export { useActionState } from "./hooks/use-action-state";
-export type { UseActionStateResult } from "./hooks/use-action-state";
+export type { UseActionStateOptions, UseActionStateResult } from "./hooks/use-action-state";
 export { usePromptSurface } from "./hooks/use-prompt-surface";
 export type { UsePromptSurfaceOptions, UsePromptSurfaceResult } from "./hooks/use-prompt-surface";
 export {
   buildThoughtSummary,
+  getActiveThoughtStep,
+  isThoughtStreamComplete,
   mergeThoughtSteps,
   parseThoughtJsonLine,
 } from "./engines/thought-parser";
+export { collectStreamInput, getStreamInputKey } from "./engines/stream-input";

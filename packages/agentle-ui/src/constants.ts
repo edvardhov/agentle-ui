@@ -1,7 +1,5 @@
 export const DEFAULT_DEBOUNCE_MS = 16;
 
-export const INPUT_KEY_FINGERPRINT_LENGTH = 32;
-
 export const DEFAULT_MAX_ATTACHMENTS = 5;
 export const DEFAULT_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 

@@ -2,4 +2,4 @@
 "agentle-ui": minor
 ---
 
-Release v0.2.0: npm publish readiness, CLI project detection and tests, command-palette keyboard navigation, composed integration test, and CI-enforced quality gates.
+Release v0.2.0: npm publish readiness, streaming auto-detect, dual ESM+CJS build, CLI schema split and alias-aware output, live action durations, incremental markdown parser, utility exports, and CI-enforced quality gates.

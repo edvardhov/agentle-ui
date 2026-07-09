@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useActionState } from "../hooks/use-action-state";
 
 describe("useActionState", () => {
@@ -59,5 +59,34 @@ describe("useActionState", () => {
     });
 
     expect(result.current.actions[0]?.completedAt).toBeTypeOf("number");
+  });
+
+  it("reports live duration while an action is running", async () => {
+    vi.useFakeTimers();
+    const startedAt = Date.now();
+
+    const { result } = renderHook(() =>
+      useActionState(
+        {
+          id: "1",
+          name: "web_search",
+          status: "running",
+          startedAt,
+        },
+        { tickMs: 500 },
+      ),
+    );
+
+    expect(result.current.formatDuration(result.current.actions[0]!)).toMatch(/\d+ms|\d+\.\d+s/);
+
+    await act(async () => {
+      vi.advanceTimersByTime(600);
+    });
+
+    const duration = result.current.formatDuration(result.current.actions[0]!);
+    expect(duration).not.toBe("");
+    expect(duration).toMatch(/\d+ms|\d+\.\d+s/);
+
+    vi.useRealTimers();
   });
 });

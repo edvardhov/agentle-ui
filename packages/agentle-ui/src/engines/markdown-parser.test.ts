@@ -97,6 +97,24 @@ describe("MarkdownCompletenessParser", () => {
 
     expect(first).toBe(second);
   });
+
+  it("incrementally re-parses from the last block when text grows", () => {
+    const parser = new MarkdownCompletenessParser();
+    const first = parser.parse("# Title", false);
+    const second = parser.parse("# Title\n\nHello", false);
+
+    expect(first[0]?.id).toBe(second[0]?.id);
+    expect(second.some((b) => b.type === "paragraph")).toBe(true);
+  });
+
+  it("fully re-parses when text is replaced with a non-prefix edit", () => {
+    const parser = new MarkdownCompletenessParser();
+    parser.parse("# Title", false);
+    const replaced = parser.parse("Different", true);
+
+    expect(replaced.some((b) => b.content.includes("Different"))).toBe(true);
+    expect(replaced.some((b) => b.content.includes("Title"))).toBe(false);
+  });
 });
 
 describe("stream-input", () => {
@@ -143,5 +161,39 @@ describe("stream-input", () => {
     const streamB = new ReadableStream<Uint8Array>();
 
     expect(getStreamInputKey(streamA)).not.toBe(getStreamInputKey(streamB));
+  });
+
+  it("assigns distinct keys to same-length strings with identical prefixes", () => {
+    const prefix = "a".repeat(40);
+    const left = `${prefix}one`;
+    const right = `${prefix}two`;
+
+    expect(left.length).toBe(right.length);
+    expect(getStreamInputKey(left)).not.toBe(getStreamInputKey(right));
+  });
+
+  it("stops delivering chunks after unsubscribe", async () => {
+    const chunks: string[] = [];
+    let resolveGate: (() => void) | undefined;
+    const gate = new Promise<void>((resolve) => {
+      resolveGate = resolve;
+    });
+
+    async function* gen() {
+      yield "a";
+      await gate;
+      yield "b";
+    }
+
+    const unsub = subscribeToStreamInput(gen(), (chunk) => {
+      chunks.push(chunk);
+    });
+
+    await new Promise((r) => setTimeout(r, 5));
+    unsub();
+    resolveGate?.();
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(chunks).not.toContain("b");
   });
 });

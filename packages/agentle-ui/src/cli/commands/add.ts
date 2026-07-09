@@ -1,5 +1,6 @@
 import {
   copyRegistryFile,
+  formatComponentImportPath,
   getProjectRoot,
   installDependencies,
   listRegistryComponents,
@@ -63,5 +64,6 @@ export async function addCommand(
     await installDependencies(cwd, deps);
   }
 
-  console.log(`\nDone. Import from "@/components/agentle/${componentName}" or the copied path.`);
+  const importPath = formatComponentImportPath(config, componentName);
+  console.log(`\nDone. Import from "${importPath}" or the copied path.`);
 }
