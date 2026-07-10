@@ -1,5 +1,11 @@
 # agentle-ui
 
+## 0.6.0
+
+### Minor Changes
+
+- Add createStreamSource for React-safe factory storage, onError/error state on stream hooks, and integration pitfall docs.
+
 ## 0.5.0
 
 ### Minor Changes

@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useThoughtStream } from "../hooks/use-thought-stream";
 
 describe("useThoughtStream", () => {
@@ -49,5 +49,26 @@ describe("useThoughtStream", () => {
     });
 
     expect(result.current.summary).toContain("Thinking");
+  });
+
+  it("calls onError and keeps parsed steps when stream fails", async () => {
+    const boom = new Error("thought stream failed");
+    const onError = vi.fn();
+
+    const source = () =>
+      (async function* () {
+        yield '{"id":"1","label":"Searching...","status":"active"}\n';
+        throw boom;
+      })();
+
+    const { result } = renderHook(() => useThoughtStream(source, { onError }));
+
+    await waitFor(() => {
+      expect(result.current.error).toBe(boom);
+    });
+
+    expect(onError).toHaveBeenCalledWith(boom);
+    expect(result.current.steps).toHaveLength(1);
+    expect(result.current.isComplete).toBe(false);
   });
 });

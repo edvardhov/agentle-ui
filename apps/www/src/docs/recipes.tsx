@@ -53,7 +53,78 @@ export function RecipesPage() {
         Prefer <code>isComplete</code> when your transport has a done signal (fetch complete, SSE
         end, SDK done event). Use <code>settleMs</code> auto-settle only for firehose text with no
         explicit end event. Stabilization is block-level layout safety — not ChatGPT-style character
-        typing.
+        typing. Pass <code>onError</code> on stream hooks to surface transport failures.
+      </Callout>
+
+      <AnchorHeading id="completion-model" level={2}>
+        Completion model
+      </AnchorHeading>
+      <PropsTable
+        rows={[
+          {
+            name: "Growing string",
+            type: "MarkdownStabilizer / useStabilizedMarkdown",
+            description: "You control completion via isComplete (preferred) or settleMs auto-settle",
+          },
+          {
+            name: "Stream / async iterable",
+            type: "StreamSource factory or direct stream",
+            description: "Completes on EOF or error — isComplete / settleMs not applicable",
+          },
+          {
+            name: "ThoughtStep[]",
+            type: "ThoughtVisualizer / useThoughtStream",
+            description: "Always complete — not a stream",
+          },
+        ]}
+      />
+
+      <AnchorHeading id="pitfalls" level={2}>
+        Pitfalls
+      </AnchorHeading>
+      <Callout variant="info" title="Never useState(streamFactory)">
+        <code>StreamFactory</code> is a bare function. React treats <code>useState(fn)</code> as a
+        lazy initializer and <code>setState(fn)</code> as an updater — not as storing the factory.
+        Use <code>createStreamSource(factory)</code> for state/refs,{" "}
+        <code>setState(() =&gt; factory)</code> to wrap the value, or keep the factory in a ref and
+        pass inline to the component prop.
+      </Callout>
+      <CodeBlock
+        filename="lib/stream-source-state.tsx"
+        language="tsx"
+        code={`import { useState } from "react";
+import { createStreamSource } from "agentle-ui";
+import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
+
+function makeStream(prompt: string) {
+  return () =>
+    (async function* () {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        body: JSON.stringify({ prompt }),
+      });
+      if (!res.body) return;
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        yield decoder.decode(value, { stream: true });
+      }
+    })();
+}
+
+export function Answer({ prompt }: { prompt: string }) {
+  // Safe — branded object, not a bare function
+  const [source] = useState(() => createStreamSource(makeStream(prompt)));
+  return <MarkdownStabilizer content={source} />;
+}`}
+      />
+      <Callout variant="info" title="StrictMode, abort, and tee">
+        A factory is StrictMode-safe only when each call creates a new fetch/stream.{" "}
+        <code>() =&gt; fetch(url).body</code> aborts on unsubscribe. Shared <code>tee()</code> branches
+        stall if two hooks consume them. For dual-channel UI: one owner effect → two growing strings →
+        two components.
       </Callout>
 
       <AnchorHeading id="any-backend" level={2}>
@@ -103,9 +174,44 @@ export function StreamedAnswer({ url }: { url: string }) {
         Async generators and <code>ReadableStream</code> bodies can only be consumed once. In React
         StrictMode, effects mount twice in development. Pass a <strong>factory</strong> that creates a{" "}
         <strong>fresh</strong> underlying source on each call — a new fetch or generator — not a cached
-        stream from <code>useMemo</code>. Capturing a single <code>response.body</code> in a factory
-        still breaks on remount.
+        stream from <code>useMemo</code>. Use <code>createStreamSource()</code> when storing a factory
+        in state. Capturing a single <code>response.body</code> in a factory still breaks on remount.
       </Callout>
+
+      <Callout variant="info" title="Stream errors">
+        Pass <code>onError</code> to stream hooks or templates. On failure, already-rendered blocks
+        or steps are kept and <code>error</code> is set on hook state.
+      </Callout>
+      <CodeBlock
+        filename="lib/stream-error.tsx"
+        language="tsx"
+        code={`import { useStabilizedMarkdown } from "agentle-ui";
+
+export function Answer({ source }: { source: () => AsyncIterable<string> }) {
+  const { renderedBlocks, error } = useStabilizedMarkdown(source, {
+    onError: (err) => console.error("Stream failed:", err),
+  });
+
+  if (error) {
+    return (
+      <>
+        {renderedBlocks.map((block) => (
+          <div key={block.id}>{block.content}</div>
+        ))}
+        <p role="alert">Stream interrupted.</p>
+      </>
+    );
+  }
+
+  return (
+    <div>
+      {renderedBlocks.map((block) => (
+        <div key={block.id}>{block.content}</div>
+      ))}
+    </div>
+  );
+}`}
+      />
 
       <Callout variant="tip" title="Fast APIs hide stabilization">
         The stabilizer holds incomplete markdown blocks as skeletons. If your backend returns the
@@ -156,8 +262,10 @@ export function Chat() {
       </AnchorHeading>
       <p>
         Wrap the SDK stream in an async generator and pass a <strong>factory</strong> that returns
-        it. Hooks accept <code>StreamSource</code> — strings, streams, async iterables, or{" "}
-        <code>() =&gt; AsyncIterable&lt;string&gt;</code>.
+        it. Adapters parse transport framing — you still own orchestration. Hooks accept{" "}
+        <code>StreamSource</code> — strings, streams, async iterables,{" "}
+        <code>() =&gt; AsyncIterable&lt;string&gt;</code>, or{" "}
+        <code>createStreamSource(factory)</code>.
       </p>
       <CodeBlock
         filename="lib/stream-answer.ts"
@@ -302,8 +410,78 @@ export function ReasoningPanel({ url }: { url: string }) {
         <code>tee()</code>. Use in a <strong>single owner</strong> — tee branches are
         single-consumption. Do not attach two independently-remounting hooks to split branches under
         StrictMode. For hook dual-channel UI, prefer the{" "}
-        <a href="#pollinations">single-fetch fan-out recipe</a> below.
+        <a href="#pollinations">single-fetch fan-out recipe</a> or the React two-strings recipe below.
       </p>
+      <CodeBlock
+        filename="lib/split-sse-react.tsx"
+        language="tsx"
+        code={`import { useEffect, useState } from "react";
+import {
+  openAIStreamToText,
+  splitReadableStream,
+} from "agentle-ui";
+import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
+import { ThoughtVisualizer } from "@/components/agentle/thought-visualizer";
+
+export function DualChannelAnswer({ url }: { url: string }) {
+  const [answer, setAnswer] = useState("");
+  const [reasoning, setReasoning] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAnswer("");
+    setReasoning("");
+    setDone(false);
+
+    void (async () => {
+      const res = await fetch(url);
+      if (!res.body || cancelled) return;
+
+      const [reasoningBody, contentBody] = splitReadableStream(res.body, 2);
+
+      await Promise.all([
+        (async () => {
+          for await (const chunk of openAIStreamToText(reasoningBody, { field: "reasoning" })) {
+            if (cancelled) return;
+            setReasoning((current) => current + chunk);
+          }
+        })(),
+        (async () => {
+          for await (const chunk of openAIStreamToText(contentBody)) {
+            if (cancelled) return;
+            setAnswer((current) => current + chunk);
+          }
+        })(),
+      ]);
+
+      if (!cancelled) setDone(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  return (
+    <>
+      {reasoning ? (
+        <ThoughtVisualizer
+          thoughts={[
+            {
+              id: "reasoning",
+              label: done ? "Thought process" : "Thinking…",
+              status: done ? "complete" : "active",
+              detail: reasoning,
+            },
+          ]}
+        />
+      ) : null}
+      <MarkdownStabilizer content={answer} isComplete={done} />
+    </>
+  );
+}`}
+      />
       <CodeBlock
         filename="lib/split-sse.ts"
         language="ts"

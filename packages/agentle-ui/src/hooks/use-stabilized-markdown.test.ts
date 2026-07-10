@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useStabilizedMarkdown } from "../hooks/use-stabilized-markdown";
 
 describe("useStabilizedMarkdown", () => {
@@ -168,5 +168,27 @@ describe("useStabilizedMarkdown", () => {
 
     expect(result.current.renderedBlocks.length).toBeGreaterThan(0);
     expect(result.current.renderedBlocks.some((block) => block.content.includes("World"))).toBe(true);
+  });
+
+  it("calls onError and keeps rendered blocks when stream fails", async () => {
+    const boom = new Error("markdown stream failed");
+    const onError = vi.fn();
+
+    const source = () =>
+      (async function* () {
+        yield "# Hello\n\n";
+        throw boom;
+      })();
+
+    const { result } = renderHook(() => useStabilizedMarkdown(source, { onError }));
+
+    await waitFor(() => {
+      expect(result.current.error).toBe(boom);
+    });
+
+    expect(onError).toHaveBeenCalledWith(boom);
+    expect(result.current.isStreaming).toBe(false);
+    expect(result.current.isComplete).toBe(false);
+    expect(result.current.renderedBlocks.length).toBeGreaterThan(0);
   });
 });

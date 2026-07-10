@@ -5,10 +5,13 @@ import "./agentle.css";
 
 export interface ThoughtVisualizerProps {
   thoughts: StreamSource | ThoughtStep[];
+  onError?: (error: unknown) => void;
 }
 
-export function ThoughtVisualizer({ thoughts }: ThoughtVisualizerProps) {
-  const { steps, activeStep, isComplete, summary, reducedMotion } = useThoughtStream(thoughts);
+export function ThoughtVisualizer({ thoughts, onError }: ThoughtVisualizerProps) {
+  const { steps, activeStep, isComplete, summary, reducedMotion } = useThoughtStream(thoughts, {
+    onError,
+  });
 
   if (isComplete && summary) {
     return <CollapsedSummary text={summary} steps={steps} />;

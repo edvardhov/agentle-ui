@@ -2,6 +2,7 @@ export type {
   StreamInput,
   StreamFactory,
   StreamSource,
+  StreamSourceObject,
   MarkdownBlock,
   BlockStatus,
   MarkdownBlockType,
@@ -36,7 +37,13 @@ export {
   mergeThoughtSteps,
   parseThoughtJsonLine,
 } from "./engines/thought-parser";
-export { collectStreamInput, collectStreamSource, getStreamInputKey, getStreamSourceKey } from "./engines/stream-input";
+export {
+  collectStreamInput,
+  collectStreamSource,
+  createStreamSource,
+  getStreamInputKey,
+  getStreamSourceKey,
+} from "./engines/stream-input";
 export { openAIStreamToText, parseSSE } from "./engines/sse";
 export type { OpenAIStreamToTextOptions, SSEMessage } from "./engines/sse";
 export { openAIReasoningToThoughts, textToThoughtStep } from "./engines/reasoning";

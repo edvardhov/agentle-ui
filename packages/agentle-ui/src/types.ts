@@ -2,7 +2,12 @@ export type StreamInput = string | AsyncIterable<string> | ReadableStream<Uint8A
 
 export type StreamFactory = () => Exclude<StreamInput, string>;
 
-export type StreamSource = StreamInput | StreamFactory;
+export interface StreamSourceObject {
+  readonly type: "agentle-stream-factory";
+  readonly factory: StreamFactory;
+}
+
+export type StreamSource = StreamInput | StreamFactory | StreamSourceObject;
 
 export const BLOCK_STATUSES = ["incomplete", "complete", "stable"] as const;
 export type BlockStatus = (typeof BLOCK_STATUSES)[number];

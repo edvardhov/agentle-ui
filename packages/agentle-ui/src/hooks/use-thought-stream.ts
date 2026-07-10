@@ -12,6 +12,8 @@ import type { StreamSource, ThoughtStep } from "../types";
 export interface UseThoughtStreamOptions {
   collapseOnComplete?: boolean;
   reducedMotion?: boolean;
+  /** Called when stream consumption fails. Already-parsed steps are kept. */
+  onError?: (error: unknown) => void;
 }
 
 export interface ThoughtStreamState {
@@ -20,25 +22,30 @@ export interface ThoughtStreamState {
   isComplete: boolean;
   summary: string | null;
   reducedMotion: boolean;
+  error: unknown | null;
 }
 
 interface InternalState {
   steps: ThoughtStep[];
   isComplete: boolean;
   summary: string | null;
+  error: unknown | null;
 }
 
 const EMPTY_STATE: InternalState = {
   steps: [],
   isComplete: false,
   summary: null,
+  error: null,
 };
 
 export function useThoughtStream(
   input: StreamSource | ThoughtStep[],
   options: UseThoughtStreamOptions = {},
 ): ThoughtStreamState {
-  const { collapseOnComplete = true } = options;
+  const { collapseOnComplete = true, onError } = options;
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
   const storeRef = useRef<{ snapshot: InternalState; listeners: Set<() => void> }>({
     snapshot: EMPTY_STATE,
     listeners: new Set(),
@@ -60,7 +67,7 @@ export function useThoughtStream(
       const summary =
         collapseOnComplete && complete ? buildThoughtSummary(steps) : null;
 
-      store.snapshot = { steps, isComplete: complete, summary };
+      store.snapshot = { steps, isComplete: complete, summary, error: null };
       for (const listener of store.listeners) {
         listener();
       }
@@ -106,7 +113,16 @@ export function useThoughtStream(
       listener();
     }
 
-    const unsubscribe = subscribeToStreamSource(currentInput, (chunk, done) => {
+    const unsubscribe = subscribeToStreamSource(currentInput, (chunk, done, error) => {
+      if (error !== undefined) {
+        store.snapshot = { steps, isComplete: false, summary: null, error };
+        for (const listener of store.listeners) {
+          listener();
+        }
+        onErrorRef.current?.(error);
+        return;
+      }
+
       ingestLines(chunk, done);
       commit(done);
     });
@@ -134,6 +150,7 @@ export function useThoughtStream(
     isComplete: state.isComplete,
     summary: state.summary,
     reducedMotion,
+    error: state.error,
   };
 }
 

@@ -23,12 +23,14 @@ export function ApiReferencePage() {
           {
             name: "useStabilizedMarkdown",
             type: "(input, options?) => StabilizedMarkdownState",
-            description: "Markdown block buffering and paint scheduling. Accepts StreamSource.",
+            description:
+              "Markdown block buffering and paint scheduling. Accepts StreamSource. Options: isComplete, settleMs, onError. Returns error on stream failure.",
           },
           {
             name: "useThoughtStream",
             type: "(input, options?) => ThoughtStreamState",
-            description: "Parse NDJSON thought steps from streams. Accepts StreamSource or ThoughtStep[].",
+            description:
+              "Parse NDJSON thought steps from streams. Accepts StreamSource or ThoughtStep[]. Options: onError. Returns error on stream failure.",
           },
           {
             name: "useActionState",
@@ -48,6 +50,12 @@ export function ApiReferencePage() {
       </AnchorHeading>
       <PropsTable
         rows={[
+          {
+            name: "createStreamSource",
+            type: "(factory) => StreamSourceObject",
+            description:
+              "Wrap a stream factory in a branded object safe for useState, setState, and refs.",
+          },
           {
             name: "parseSSE",
             type: "(source) => AsyncIterable<SSEMessage>",
@@ -97,7 +105,8 @@ export function ApiReferencePage() {
         language="ts"
         code={`type StreamInput = string | AsyncIterable<string> | ReadableStream<Uint8Array>;
 type StreamFactory = () => Exclude<StreamInput, string>;
-type StreamSource = StreamInput | StreamFactory;
+interface StreamSourceObject { type: "agentle-stream-factory"; factory: StreamFactory }
+type StreamSource = StreamInput | StreamFactory | StreamSourceObject;
 
 type BlockStatus = "incomplete" | "complete" | "stable";
 type ThoughtStepStatus = "active" | "complete" | "error";

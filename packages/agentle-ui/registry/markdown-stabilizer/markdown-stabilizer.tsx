@@ -7,12 +7,14 @@ export interface MarkdownStabilizerProps {
   content: StreamSource;
   isComplete?: boolean;
   settleMs?: number;
+  onError?: (error: unknown) => void;
 }
 
-export function MarkdownStabilizer({ content, isComplete, settleMs }: MarkdownStabilizerProps) {
+export function MarkdownStabilizer({ content, isComplete, settleMs, onError }: MarkdownStabilizerProps) {
   const { renderedBlocks, pendingBlocks, isStreaming } = useStabilizedMarkdown(content, {
     isComplete,
     settleMs,
+    onError,
   });
 
   return (

@@ -15,6 +15,8 @@ export interface UseStabilizedMarkdownOptions {
   settleMs?: number;
   flushOnComplete?: boolean;
   onBlockRendered?: (block: MarkdownBlock) => void;
+  /** Called when stream consumption fails. Already-rendered blocks are kept. */
+  onError?: (error: unknown) => void;
   /** When using string input, set false while tokens are still arriving. Omit to auto-detect streaming. */
   isComplete?: boolean;
 }
@@ -24,6 +26,7 @@ export interface StabilizedMarkdownState {
   pendingBlocks: MarkdownBlock[];
   isStreaming: boolean;
   isComplete: boolean;
+  error: unknown | null;
 }
 
 interface InternalState {
@@ -31,6 +34,7 @@ interface InternalState {
   pendingBlocks: MarkdownBlock[];
   isStreaming: boolean;
   isComplete: boolean;
+  error: unknown | null;
 }
 
 const EMPTY_STATE: InternalState = {
@@ -38,6 +42,7 @@ const EMPTY_STATE: InternalState = {
   pendingBlocks: [],
   isStreaming: false,
   isComplete: false,
+  error: null,
 };
 
 function ensureStore(
@@ -70,6 +75,7 @@ function parseStringSnapshot(
     pendingBlocks,
     isStreaming: !complete,
     isComplete: complete,
+    error: null,
   };
 }
 
@@ -81,11 +87,14 @@ export function useStabilizedMarkdown(
     debounceMs = DEFAULT_DEBOUNCE_MS,
     flushOnComplete = true,
     onBlockRendered,
+    onError,
     isComplete: isCompleteOption,
   } = options;
   const settleMs = options.settleMs ?? debounceMs;
   const onBlockRenderedRef = useRef(onBlockRendered);
   onBlockRenderedRef.current = onBlockRendered;
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
 
   const parserRef = useRef<MarkdownCompletenessParser | null>(null);
   if (!parserRef.current) {
@@ -145,6 +154,7 @@ export function useStabilizedMarkdown(
         pendingBlocks,
         isStreaming: !complete,
         isComplete: complete,
+        error: null,
       };
 
       if (complete) {
@@ -187,9 +197,28 @@ export function useStabilizedMarkdown(
       pendingBlocks: [],
       isStreaming: true,
       isComplete: false,
+      error: null,
     });
 
-    const unsubscribe = subscribeToStreamSource(currentInput, (chunk, done) => {
+    const unsubscribe = subscribeToStreamSource(currentInput, (chunk, done, error) => {
+      if (error !== undefined) {
+        const activeStore = storeRef.current;
+        if (!activeStore) return;
+
+        let blocks = parser.parse(buffer, false);
+        const { renderedBlocks, pendingBlocks } = partitionBlocks(blocks);
+
+        activeStore.flush({
+          renderedBlocks,
+          pendingBlocks,
+          isStreaming: false,
+          isComplete: false,
+          error,
+        });
+        onErrorRef.current?.(error);
+        return;
+      }
+
       buffer += chunk;
       commit(done);
     });

@@ -1,4 +1,4 @@
-import type { StreamFactory, StreamInput, StreamSource } from "../types";
+import type { StreamFactory, StreamInput, StreamSource, StreamSourceObject } from "../types";
 
 function hashString(value: string): string {
   let hash = 2166136261;
@@ -10,7 +10,20 @@ function hashString(value: string): string {
 }
 
 export type StreamUnsubscribe = () => void;
-export type StreamListener = (chunk: string, done: boolean) => void;
+export type StreamListener = (chunk: string, done: boolean, error?: unknown) => void;
+
+export function createStreamSource(factory: StreamFactory): StreamSourceObject {
+  return { type: "agentle-stream-factory", factory };
+}
+
+export function isStreamSourceObject(value: StreamSource): value is StreamSourceObject {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    (value as StreamSourceObject).type === "agentle-stream-factory"
+  );
+}
 
 const textDecoder = new TextDecoder();
 let streamObjectIdCounter = 0;
@@ -30,7 +43,13 @@ export function isStreamFactory(value: StreamSource): value is StreamFactory {
 }
 
 export function resolveStreamSource(source: StreamSource): StreamInput {
-  return isStreamFactory(source) ? source() : source;
+  if (isStreamSourceObject(source)) {
+    return source.factory();
+  }
+  if (isStreamFactory(source)) {
+    return source();
+  }
+  return source;
 }
 
 export function subscribeToStreamSource(
@@ -67,6 +86,9 @@ export function subscribeToStreamInput(
 }
 
 export function getStreamSourceKey(source: StreamSource): string {
+  if (isStreamSourceObject(source)) {
+    return `factory:${getStreamObjectId(source)}`;
+  }
   if (isStreamFactory(source)) {
     return `factory:${getStreamObjectId(source)}`;
   }
@@ -105,9 +127,9 @@ async function consumeReadableStream(
         return;
       }
     }
-  } catch {
+  } catch (error) {
     if (!isCancelled()) {
-      listener("", true);
+      listener("", true, error);
     }
   } finally {
     reader.releaseLock();
@@ -127,9 +149,9 @@ async function consumeAsyncIterable(
     if (!isCancelled()) {
       listener("", true);
     }
-  } catch {
+  } catch (error) {
     if (!isCancelled()) {
-      listener("", true);
+      listener("", true, error);
     }
   }
 }
@@ -144,8 +166,12 @@ export async function collectStreamInput(input: StreamInput): Promise<string> {
   }
 
   let result = "";
-  return new Promise((resolve) => {
-    subscribeToStreamInput(input, (chunk, done) => {
+  return new Promise((resolve, reject) => {
+    subscribeToStreamInput(input, (chunk, done, error) => {
+      if (error !== undefined) {
+        reject(error);
+        return;
+      }
       result += chunk;
       if (done) {
         resolve(result);
