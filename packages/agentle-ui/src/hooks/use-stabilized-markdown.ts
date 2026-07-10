@@ -205,7 +205,7 @@ export function useStabilizedMarkdown(
         const activeStore = storeRef.current;
         if (!activeStore) return;
 
-        let blocks = parser.parse(buffer, false);
+        const blocks = parser.parse(buffer, false);
         const { renderedBlocks, pendingBlocks } = partitionBlocks(blocks);
 
         activeStore.flush({
