@@ -16,6 +16,7 @@
 
 <p align="center">
   Headless React hooks and copy-paste templates for AI-native presentation.<br />
+  Stabilizes streaming markdown into stable blocks — not a typewriter or character-stream effect.<br />
   Zero vendor lock-in — accepts raw strings or streams from any backend.
 </p>
 
@@ -41,43 +42,181 @@ npx agentle-ui init
 npx agentle-ui add markdown-stabilizer
 ```
 
-## Quick start
-
-```tsx
-import { useStabilizedMarkdown } from "agentle-ui";
-
-export function Answer({ content }: { content: string }) {
-  const { renderedBlocks, pendingBlocks, isStreaming } = useStabilizedMarkdown(content);
-
-  return (
-    <div data-streaming={isStreaming}>
-      {renderedBlocks.map((block) => (
-        <div key={block.id}>{block.content}</div>
-      ))}
-      {pendingBlocks.map((block) => (
-        <div key={block.id} aria-hidden="true" />
-      ))}
-    </div>
-  );
-}
-```
-
-Or copy the styled template:
+## Quick start (styled template)
 
 ```tsx
 import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
 
-<MarkdownStabilizer content={streamOrString} />;
+export function Answer({ content }: { content: string }) {
+  return <MarkdownStabilizer content={content} />;
+}
 ```
 
-## Pillars
+The CLI copies `MarkdownStabilizer` plus `agentle.css`. Import the CSS once in your app entry or layout.
 
-| Component | Description |
-| --- | --- |
-| Markdown Stabilizer | Buffers incomplete markdown blocks to prevent layout shift |
-| Thought Visualizer | Shows what the agent is doing instead of a spinner |
-| Action Card | Transparent tool-call UI for agentic actions |
-| Prompt Surface | Multi-line input with attachments and slash commands |
+## Three input shapes
+
+| Concern | Component / hook | What you pass |
+|--------|------------------|---------------|
+| Answer markdown | `MarkdownStabilizer` / `useStabilizedMarkdown` | Growing string or `StreamSource` of text |
+| Thinking | `ThoughtVisualizer` / `useThoughtStream` | NDJSON thought lines or `ThoughtStep[]` |
+| Tools | `ActionCard` / `useActionState` | `AgentAction[]` (app state, not a stream) |
+
+Raw `delta.reasoning` tokens are not thought steps. SSE frames are not markdown. Map your backend to strings or NDJSON, or use the optional adapters below.
+
+## Streaming (any backend)
+
+Accumulate tokens into a growing string in your transport layer. Pass `isComplete` when your backend signals done — this is the production path.
+
+```tsx
+import { useState, useEffect } from "react";
+import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
+
+export function StreamedAnswer({ url }: { url: string }) {
+  const [content, setContent] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setContent("");
+    setDone(false);
+
+    void (async () => {
+      const response = await fetch(url, { signal: controller.signal });
+      const reader = response.body?.getReader();
+      if (!reader) return;
+
+      const decoder = new TextDecoder();
+      while (true) {
+        const { value, done: eof } = await reader.read();
+        if (eof) break;
+        setContent((current) => current + decoder.decode(value, { stream: true }));
+      }
+      setDone(true);
+    })();
+
+    return () => controller.abort();
+  }, [url]);
+
+  return <MarkdownStabilizer content={content} isComplete={done} />;
+}
+```
+
+**Production guidance**
+
+- Prefer **`isComplete`** when your transport has a done signal (SSE end, fetch complete, SDK `done` event).
+- Use **`settleMs`** auto-settle only for firehose text with no explicit end event (demos, replays).
+- Pass a **`StreamSource` factory** (`() => stream`) for live async iterables — creates a fresh stream per subscription (StrictMode-safe). Use **`createStreamSource()`** when storing a factory in React state (see Pitfalls).
+- Pass **`onError`** on stream hooks to surface transport failures; already-rendered blocks/steps are kept.
+
+**Completion model**
+
+| Input | Completion signal | `isComplete` / `settleMs` |
+|-------|-------------------|---------------------------|
+| Growing string | You control | `isComplete` prop (preferred) or `settleMs` auto-settle |
+| Stream / async iterable | EOF or error | Not applicable — completes when the stream ends |
+| `ThoughtStep[]` | Always complete | Not applicable |
+
+Headless control:
+
+```tsx
+import { useStabilizedMarkdown } from "agentle-ui";
+
+const { renderedBlocks, pendingBlocks, isStreaming } = useStabilizedMarkdown(content, {
+  isComplete: done,
+});
+```
+
+## OpenAI-compatible SSE (optional adapters)
+
+Most real backends stream SSE JSON, not plain text. Adapters parse transport framing — they are not turnkey orchestration. You still own fetch, dual-channel routing, and state. Use `parseSSE` / `openAIStreamToText` to extract text tokens first:
+
+```tsx
+import { openAIStreamToText } from "agentle-ui";
+import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
+
+export function AnswerFromSSE({ url }: { url: string }) {
+  return (
+    <MarkdownStabilizer
+      content={() =>
+        (async function* () {
+          const res = await fetch(url);
+          if (!res.body) return;
+          yield* openAIStreamToText(res.body);
+        })()
+      }
+    />
+  );
+}
+```
+
+For free-text `delta.reasoning`, use **`textToThoughtStep`** (generic bridge) or **`openAIReasoningToThoughts`** (OpenAI SSE sugar) with `ThoughtVisualizer`.
+
+Dual-channel bodies (reasoning + content in one response): use **`splitReadableStream(body, 2)`** in a single owner effect, or route both deltas into two state strings in one fetch loop. Tee branches are single-consumption — do not attach two remounting hooks to split branches under StrictMode.
+
+## Pitfalls
+
+**Never store a bare factory in `useState`**
+
+`StreamFactory` is a function. React treats `useState(fn)` as a lazy initializer and `setState(fn)` as an updater — not as storing the factory. You get one-shot consumption and confusing partial output.
+
+```tsx
+// Wrong — React invokes the factory as an updater
+const [source, setSource] = useState(() => myStreamFactory);
+setSource(() => myStreamFactory);
+
+// Right — branded object, safe in state/refs
+import { createStreamSource } from "agentle-ui";
+const [source, setSource] = useState(createStreamSource(myStreamFactory));
+
+// Right — functional setState wraps the factory value
+setSource(() => () => freshStream());
+
+// Right — keep factory in a ref, pass inline to the component prop
+const factoryRef = useRef(myStreamFactory);
+<MarkdownStabilizer content={factoryRef.current} />
+```
+
+**StrictMode and live HTTP**
+
+A factory is StrictMode-safe only when **each call creates a new fetch/stream**. `() => fetch(url).body` aborts on unsubscribe; a shared `tee()` branch stalls if two hooks consume it. For dual-channel UI under StrictMode: one owner effect → two growing strings → two components.
+
+**Prefer strings for production**
+
+For live HTTP, accumulate tokens into state strings + `isComplete`. Reserve factories for demos, replays, or SDK async iterables where you control fresh source creation.
+
+## Headless hooks
+
+| Hook | Returns | Purpose |
+|------|---------|---------|
+| `useStabilizedMarkdown` | `renderedBlocks`, `pendingBlocks`, `isStreaming`, `isComplete`, `error` | Buffer incomplete markdown blocks to prevent layout shift |
+| `useThoughtStream` | `steps`, `activeStep`, `isComplete`, `summary`, `reducedMotion`, `error` | Show agent thinking steps instead of a spinner |
+| `useActionState` | `actions`, `runningCount`, `toggleExpanded`, `isExpanded`, `formatDuration` | Track tool-call expansion and live duration |
+| `usePromptSurface` | `text`, `setText`, `attachments`, `filteredCommands`, `handleKeyDown`, `submit`, … | Multi-line input with attachments and slash commands |
+
+## CLI
+
+```bash
+npx agentle-ui init                        # Create agentle-ui.json + components/agentle/
+npx agentle-ui add markdown-stabilizer     # Copy template files
+npx agentle-ui add <component> --overwrite # Replace existing copied files
+npx agentle-ui list                        # List available components
+```
+
+Available components: `markdown-stabilizer`, `thought-visualizer`, `action-card`, `prompt-surface`.
+
+## Utilities
+
+Also exported for custom integrations:
+
+- `createStreamSource` — wrap a stream factory in a branded object safe for `useState` / refs
+- `parseSSE`, `openAIStreamToText` — parse OpenAI-compatible SSE and extract `delta.content` or `delta.reasoning`
+- `textToThoughtStep`, `openAIReasoningToThoughts` — map free-text reasoning into a single collapsible ThoughtStep (NDJSON)
+- `splitReadableStream` — vendor-neutral `ReadableStream` fan-out via native `tee()`
+- `collectStreamInput`, `collectStreamSource`, `getStreamInputKey`, `getStreamSourceKey`
+- `parseThoughtJsonLine`, `mergeThoughtSteps`, `buildThoughtSummary`, `getActiveThoughtStep`, `isThoughtStreamComplete`
+
+Stream hooks accept `StreamSource`: a string, stream, async iterable, factory `() => stream`, or `createStreamSource(factory)`. Pass **`onError`** to handle transport failures.
 
 ## Bundle size
 
@@ -97,15 +236,9 @@ pnpm dev
 
 ## Documentation
 
-Live docs, demos, and integration recipes: [edvardhov.github.io/agentle-ui](https://edvardhov.github.io/agentle-ui)
+Full docs, live demos, and integration recipes: [edvardhov.github.io/agentle-ui](https://edvardhov.github.io/agentle-ui)
 
 Package on npm: [npmjs.com/package/agentle-ui](https://www.npmjs.com/package/agentle-ui)
-
-For local development:
-
-```bash
-pnpm dev
-```
 
 ## License
 
