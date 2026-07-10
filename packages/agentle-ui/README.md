@@ -122,8 +122,11 @@ Available components: `markdown-stabilizer`, `thought-visualizer`, `action-card`
 
 Also exported for custom integrations:
 
-- `collectStreamInput`, `getStreamInputKey`
+- `parseSSE`, `openAIStreamToText` — parse OpenAI-compatible SSE and extract `delta.content` or `delta.reasoning`
+- `collectStreamInput`, `collectStreamSource`, `getStreamInputKey`, `getStreamSourceKey`
 - `parseThoughtJsonLine`, `mergeThoughtSteps`, `buildThoughtSummary`, `getActiveThoughtStep`, `isThoughtStreamComplete`
+
+Stream hooks accept `StreamSource`: a string, stream, async iterable, or factory `() => stream` (StrictMode-safe).
 
 ## Documentation
 

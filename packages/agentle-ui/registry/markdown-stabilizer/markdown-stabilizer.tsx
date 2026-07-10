@@ -1,14 +1,19 @@
-import { useStabilizedMarkdown, type StreamInput } from "agentle-ui";
+import { useStabilizedMarkdown, type StreamSource } from "agentle-ui";
 import { BlockRenderer } from "./block-renderer";
 import { BlockSkeleton } from "./block-skeleton";
 import "./agentle.css";
 
 export interface MarkdownStabilizerProps {
-  content: StreamInput;
+  content: StreamSource;
+  isComplete?: boolean;
+  settleMs?: number;
 }
 
-export function MarkdownStabilizer({ content }: MarkdownStabilizerProps) {
-  const { renderedBlocks, pendingBlocks, isStreaming } = useStabilizedMarkdown(content);
+export function MarkdownStabilizer({ content, isComplete, settleMs }: MarkdownStabilizerProps) {
+  const { renderedBlocks, pendingBlocks, isStreaming } = useStabilizedMarkdown(content, {
+    isComplete,
+    settleMs,
+  });
 
   return (
     <div

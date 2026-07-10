@@ -1,4 +1,4 @@
-import type { StreamInput } from "../types";
+import type { StreamFactory, StreamInput, StreamSource } from "../types";
 
 function hashString(value: string): string {
   let hash = 2166136261;
@@ -25,6 +25,21 @@ function getStreamObjectId(value: object): number {
   return id;
 }
 
+export function isStreamFactory(value: StreamSource): value is StreamFactory {
+  return typeof value === "function";
+}
+
+export function resolveStreamSource(source: StreamSource): StreamInput {
+  return isStreamFactory(source) ? source() : source;
+}
+
+export function subscribeToStreamSource(
+  source: StreamSource,
+  listener: StreamListener,
+): StreamUnsubscribe {
+  return subscribeToStreamInput(resolveStreamSource(source), listener);
+}
+
 export function subscribeToStreamInput(
   input: StreamInput,
   listener: StreamListener,
@@ -49,6 +64,13 @@ export function subscribeToStreamInput(
   return () => {
     cancelled = true;
   };
+}
+
+export function getStreamSourceKey(source: StreamSource): string {
+  if (isStreamFactory(source)) {
+    return `factory:${getStreamObjectId(source)}`;
+  }
+  return getStreamInputKey(source);
 }
 
 export function getStreamInputKey(input: StreamInput): string {
@@ -110,6 +132,10 @@ async function consumeAsyncIterable(
       listener("", true);
     }
   }
+}
+
+export async function collectStreamSource(source: StreamSource): Promise<string> {
+  return collectStreamInput(resolveStreamSource(source));
 }
 
 export async function collectStreamInput(input: StreamInput): Promise<string> {

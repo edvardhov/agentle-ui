@@ -149,4 +149,24 @@ describe("useStabilizedMarkdown", () => {
       expect(result.current.renderedBlocks.some((b) => b.type === "code_fence")).toBe(true);
     });
   });
+
+  it("delivers output when hook remounts with a stream factory", async () => {
+    const source = () =>
+      (async function* () {
+        yield "# Hello\n\n";
+        yield "World";
+      })();
+
+    const { unmount } = renderHook(() => useStabilizedMarkdown(source));
+    unmount();
+
+    const { result } = renderHook(() => useStabilizedMarkdown(source));
+
+    await waitFor(() => {
+      expect(result.current.isComplete).toBe(true);
+    });
+
+    expect(result.current.renderedBlocks.length).toBeGreaterThan(0);
+    expect(result.current.renderedBlocks.some((block) => block.content.includes("World"))).toBe(true);
+  });
 });

@@ -1,10 +1,10 @@
-import { useThoughtStream, type StreamInput, type ThoughtStep } from "agentle-ui";
+import { useThoughtStream, type StreamSource, type ThoughtStep } from "agentle-ui";
 import { CollapsedSummary } from "./collapsed-summary";
 import { ThoughtStepRow } from "./thought-step-row";
 import "./agentle.css";
 
 export interface ThoughtVisualizerProps {
-  thoughts: StreamInput | ThoughtStep[];
+  thoughts: StreamSource | ThoughtStep[];
 }
 
 export function ThoughtVisualizer({ thoughts }: ThoughtVisualizerProps) {

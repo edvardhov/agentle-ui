@@ -21,6 +21,20 @@ export function RecipesPage() {
         <Link to="/example">Example chat</Link>.
       </Callout>
 
+      <Callout variant="info" title="StrictMode and single-use generators">
+        Async generators and some SDK streams can only be consumed once. In React StrictMode, effects
+        mount twice in development. Pass a <strong>factory</strong>{" "}
+        <code>() =&gt; streamOpenAIText(prompt)</code> instead of caching the generator in{" "}
+        <code>useMemo</code> — hooks call the factory on each subscription so remounts get a fresh
+        stream.
+      </Callout>
+
+      <Callout variant="tip" title="Fast APIs hide stabilization">
+        The stabilizer holds incomplete markdown blocks as skeletons. If your backend returns the
+        full answer in one chunk (or completes in a few milliseconds), you will not see skeletons.
+        Use a slow source, replay demo, or increase <code>settleMs</code> to observe the effect.
+      </Callout>
+
       <AnchorHeading id="vercel-ai-sdk" level={2}>
         Vercel AI SDK
       </AnchorHeading>
@@ -63,8 +77,9 @@ export function Chat() {
         OpenAI / Anthropic SDK
       </AnchorHeading>
       <p>
-        Wrap the SDK stream in an async generator and pass it directly as{" "}
-        <code>StreamInput</code>. Hooks accept <code>AsyncIterable&lt;string&gt;</code>.
+        Wrap the SDK stream in an async generator and pass a <strong>factory</strong> that returns
+        it. Hooks accept <code>StreamSource</code> — strings, streams, async iterables, or{" "}
+        <code>() =&gt; AsyncIterable&lt;string&gt;</code>.
       </p>
       <CodeBlock
         filename="lib/stream-answer.ts"
@@ -87,8 +102,9 @@ async function* streamOpenAIText(prompt: string) {
 }
 
 export function Answer({ prompt }: { prompt: string }) {
-  const stream = useMemo(() => streamOpenAIText(prompt), [prompt]);
-  const { renderedBlocks, pendingBlocks, isStreaming } = useStabilizedMarkdown(stream);
+  const { renderedBlocks, pendingBlocks, isStreaming } = useStabilizedMarkdown(
+    () => streamOpenAIText(prompt),
+  );
 
   return (
     <div data-streaming={isStreaming}>
@@ -103,6 +119,7 @@ export function Answer({ prompt }: { prompt: string }) {
         filename="lib/stream-answer-anthropic.ts"
         language="ts"
         code={`import Anthropic from "@anthropic-ai/sdk";
+import { useStabilizedMarkdown } from "agentle-ui";
 
 async function* streamAnthropicText(prompt: string) {
   const client = new Anthropic();
@@ -117,41 +134,12 @@ async function* streamAnthropicText(prompt: string) {
       yield event.delta.text;
     }
   }
-}`}
-      />
+}
 
-      <AnchorHeading id="fetch-sse" level={2}>
-        Raw fetch + SSE
-      </AnchorHeading>
-      <p>
-        Pass <code>response.body</code> directly — it is a{" "}
-        <code>ReadableStream&lt;Uint8Array&gt;</code>, which agentle-ui already accepts as{" "}
-        <code>StreamInput</code>.
-      </p>
-      <CodeBlock
-        filename="lib/stream-sse.ts"
-        language="ts"
-        code={`import { useStabilizedMarkdown } from "agentle-ui";
-
-export function AnswerFromSSE({ url }: { url: string }) {
-  const [stream, setStream] = useState<ReadableStream<Uint8Array> | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const res = await fetch(url);
-      if (!cancelled && res.body) setStream(res.body);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [url]);
-
-  const { renderedBlocks, pendingBlocks, isStreaming } = useStabilizedMarkdown(
-    stream ?? "",
+export function Answer({ prompt }: { prompt: string }) {
+  const { renderedBlocks, isStreaming } = useStabilizedMarkdown(
+    () => streamAnthropicText(prompt),
   );
-
-  if (!stream) return null;
 
   return (
     <div data-streaming={isStreaming}>
@@ -162,6 +150,107 @@ export function AnswerFromSSE({ url }: { url: string }) {
   );
 }`}
       />
+
+      <AnchorHeading id="fetch-sse" level={2}>
+        OpenAI-compatible SSE (fetch)
+      </AnchorHeading>
+      <p>
+        Do <strong>not</strong> pass <code>response.body</code> directly — raw SSE frames contain{" "}
+        <code>data: {"{...}"}</code> JSON, not markdown. Use{" "}
+        <code>openAIStreamToText</code> to parse SSE and extract <code>choices[0].delta.content</code>.
+      </p>
+      <CodeBlock
+        filename="lib/stream-sse.ts"
+        language="ts"
+        code={`import { openAIStreamToText, useStabilizedMarkdown } from "agentle-ui";
+
+export function AnswerFromSSE({ url }: { url: string }) {
+  const { renderedBlocks, pendingBlocks, isStreaming } = useStabilizedMarkdown(() =>
+    (async function* () {
+      const res = await fetch(url);
+      if (!res.body) return;
+      yield* openAIStreamToText(res.body);
+    })(),
+  );
+
+  return (
+    <div data-streaming={isStreaming}>
+      {renderedBlocks.map((block) => (
+        <div key={block.id}>{block.content}</div>
+      ))}
+      {pendingBlocks.map((block) => (
+        <div key={block.id} aria-hidden="true" />
+      ))}
+    </div>
+  );
+}`}
+      />
+
+      <AnchorHeading id="pollinations" level={2}>
+        Pollinations / delta.reasoning
+      </AnchorHeading>
+      <p>
+        Pollinations and similar APIs emit OpenAI-compatible SSE with separate{" "}
+        <code>delta.content</code> and <code>delta.reasoning</code> fields. Use{" "}
+        <code>openAIStreamToText</code> with <code>field: "reasoning"</code> for the thinking
+        stream and <code>field: "content"</code> (default) for the answer. Free-text reasoning is
+        markdown/text — it does not map automatically to structured <code>ThoughtStep</code> NDJSON.
+      </p>
+      <CodeBlock
+        filename="lib/pollinations-chat.tsx"
+        language="tsx"
+        code={`import { openAIStreamToText } from "agentle-ui";
+import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
+
+function createPollinationsStream(prompt: string) {
+  return (async function* () {
+    const res = await fetch("https://text.pollinations.ai/openai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai",
+        messages: [{ role: "user", content: prompt }],
+        stream: true,
+      }),
+    });
+    if (!res.body) return;
+    yield* openAIStreamToText(res.body, { field: "content" });
+  })();
+}
+
+function createPollinationsReasoningStream(prompt: string) {
+  return (async function* () {
+    const res = await fetch("https://text.pollinations.ai/openai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai",
+        messages: [{ role: "user", content: prompt }],
+        stream: true,
+      }),
+    });
+    if (!res.body) return;
+    yield* openAIStreamToText(res.body, { field: "reasoning" });
+  })();
+}
+
+export function PollinationsAnswer({ prompt }: { prompt: string }) {
+  return (
+    <>
+      <section aria-label="Reasoning">
+        <MarkdownStabilizer content={() => createPollinationsReasoningStream(prompt)} />
+      </section>
+      <MarkdownStabilizer content={() => createPollinationsStream(prompt)} />
+    </>
+  );
+}`}
+      />
+      <Callout variant="tip" title="Structured thoughts need NDJSON">
+        For collapsible step UI, emit NDJSON lines matching{" "}
+        <code>{"{ id, label, status, detail? }"}</code> and pass them to{" "}
+        <code>useThoughtStream</code>. Raw <code>delta.reasoning</code> strings are better rendered
+        as markdown via <code>useStabilizedMarkdown</code>.
+      </Callout>
 
       <AnchorHeading id="tool-calls" level={2}>
         Tool calls → ActionCard
@@ -223,13 +312,15 @@ export function AgentTools({ events }: { events: ToolCallEvent[] }) {
         code={`import { ThoughtVisualizer } from "@/components/agentle/thought-visualizer";
 
 export function AgentThoughts({ stream }: { stream: ReadableStream<Uint8Array> }) {
-  return <ThoughtVisualizer thoughts={stream} />;
+  return <ThoughtVisualizer thoughts={() => stream} />;
 }
 
 // Or headless:
 import { useThoughtStream } from "agentle-ui";
 
-const { steps, activeStep, isComplete, summary } = useThoughtStream(thoughtStream);`}
+const { steps, activeStep, isComplete, summary } = useThoughtStream(
+  () => thoughtStream,
+);`}
       />
 
       <AnchorHeading id="prompt-input" level={2}>

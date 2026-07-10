@@ -6,8 +6,8 @@ import {
   partitionBlocks,
 } from "../engines/markdown-parser";
 import { PaintScheduler, StreamStore } from "../engines/scheduler";
-import { getStreamInputKey, subscribeToStreamInput } from "../engines/stream-input";
-import type { MarkdownBlock, StreamInput } from "../types";
+import { getStreamSourceKey, subscribeToStreamSource } from "../engines/stream-input";
+import type { MarkdownBlock, StreamSource } from "../types";
 
 export interface UseStabilizedMarkdownOptions {
   debounceMs?: number;
@@ -74,7 +74,7 @@ function parseStringSnapshot(
 }
 
 export function useStabilizedMarkdown(
-  input: StreamInput,
+  input: StreamSource,
   options: UseStabilizedMarkdownOptions = {},
 ): StabilizedMarkdownState {
   const {
@@ -98,7 +98,7 @@ export function useStabilizedMarkdown(
   const prevStringRef = useRef<string>("");
   ensureStore(schedulerRef, storeRef, debounceMs);
 
-  const inputKey = useMemo(() => getStreamInputKey(input), [input]);
+  const inputKey = useMemo(() => getStreamSourceKey(input), [input]);
 
   const serverSnapshot = useMemo(() => {
     if (typeof input !== "string") {
@@ -189,7 +189,7 @@ export function useStabilizedMarkdown(
       isComplete: false,
     });
 
-    const unsubscribe = subscribeToStreamInput(currentInput, (chunk, done) => {
+    const unsubscribe = subscribeToStreamSource(currentInput, (chunk, done) => {
       buffer += chunk;
       commit(done);
     });

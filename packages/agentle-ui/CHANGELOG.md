@@ -1,5 +1,11 @@
 # agentle-ui
 
+## 0.3.0
+
+### Minor Changes
+
+- Add SSE/OpenAI delta stream adapters, StrictMode-safe stream factories, and MarkdownStabilizer isComplete prop. Fix integration recipes for SSE and Pollinations.
+
 ## 0.2.3
 
 ### Patch Changes

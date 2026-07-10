@@ -1,5 +1,9 @@
 export type StreamInput = string | AsyncIterable<string> | ReadableStream<Uint8Array>;
 
+export type StreamFactory = () => Exclude<StreamInput, string>;
+
+export type StreamSource = StreamInput | StreamFactory;
+
 export const BLOCK_STATUSES = ["incomplete", "complete", "stable"] as const;
 export type BlockStatus = (typeof BLOCK_STATUSES)[number];
 

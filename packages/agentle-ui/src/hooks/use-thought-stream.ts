@@ -6,8 +6,8 @@ import {
   mergeThoughtSteps,
   parseThoughtJsonLine,
 } from "../engines/thought-parser";
-import { subscribeToStreamInput, getStreamInputKey } from "../engines/stream-input";
-import type { StreamInput, ThoughtStep } from "../types";
+import { getStreamSourceKey, subscribeToStreamSource } from "../engines/stream-input";
+import type { StreamSource, ThoughtStep } from "../types";
 
 export interface UseThoughtStreamOptions {
   collapseOnComplete?: boolean;
@@ -35,7 +35,7 @@ const EMPTY_STATE: InternalState = {
 };
 
 export function useThoughtStream(
-  input: StreamInput | ThoughtStep[],
+  input: StreamSource | ThoughtStep[],
   options: UseThoughtStreamOptions = {},
 ): ThoughtStreamState {
   const { collapseOnComplete = true } = options;
@@ -106,7 +106,7 @@ export function useThoughtStream(
       listener();
     }
 
-    const unsubscribe = subscribeToStreamInput(currentInput, (chunk, done) => {
+    const unsubscribe = subscribeToStreamSource(currentInput, (chunk, done) => {
       ingestLines(chunk, done);
       commit(done);
     });
@@ -137,11 +137,11 @@ export function useThoughtStream(
   };
 }
 
-function getThoughtInputKey(input: StreamInput | ThoughtStep[]): string {
+function getThoughtInputKey(input: StreamSource | ThoughtStep[]): string {
   if (Array.isArray(input)) {
     return `steps:${input.length}:${input.map((step) => `${step.id}:${step.status}`).join(",")}`;
   }
-  return getStreamInputKey(input);
+  return getStreamSourceKey(input);
 }
 
 function useReducedMotion(explicit?: boolean): boolean {
