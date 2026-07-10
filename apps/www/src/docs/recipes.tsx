@@ -21,12 +21,12 @@ export function RecipesPage() {
         <Link to="/example">Example chat</Link>.
       </Callout>
 
-      <Callout variant="info" title="StrictMode and single-use generators">
-        Async generators and some SDK streams can only be consumed once. In React StrictMode, effects
-        mount twice in development. Pass a <strong>factory</strong>{" "}
-        <code>() =&gt; streamOpenAIText(prompt)</code> instead of caching the generator in{" "}
-        <code>useMemo</code> — hooks call the factory on each subscription so remounts get a fresh
-        stream.
+      <Callout variant="info" title="StrictMode and single-use streams">
+        Async generators and <code>ReadableStream</code> bodies can only be consumed once. In React
+        StrictMode, effects mount twice in development. Pass a <strong>factory</strong> that creates a{" "}
+        <strong>fresh</strong> underlying source on each call — a new fetch or generator — not a cached
+        stream from <code>useMemo</code>. Capturing a single <code>response.body</code> in a factory
+        still breaks on remount.
       </Callout>
 
       <Callout variant="tip" title="Fast APIs hide stabilization">
@@ -186,70 +186,129 @@ export function AnswerFromSSE({ url }: { url: string }) {
 }`}
       />
 
-      <AnchorHeading id="pollinations" level={2}>
-        Pollinations / delta.reasoning
+      <AnchorHeading id="reasoning-to-thought" level={2}>
+        Reasoning → collapsible thought
       </AnchorHeading>
       <p>
-        Pollinations and similar APIs emit OpenAI-compatible SSE with separate{" "}
-        <code>delta.content</code> and <code>delta.reasoning</code> fields. Use{" "}
-        <code>openAIStreamToText</code> with <code>field: "reasoning"</code> for the thinking
-        stream and <code>field: "content"</code> (default) for the answer. Free-text reasoning is
-        markdown/text — it does not map automatically to structured <code>ThoughtStep</code> NDJSON.
+        OpenAI-compatible APIs emit free-text <code>delta.reasoning</code> tokens — not structured
+        NDJSON steps. Use <code>openAIReasoningToThoughts</code> to map them into a single evolving{" "}
+        <code>ThoughtStep</code> (active while streaming, collapses when complete).
+      </p>
+      <CodeBlock
+        filename="lib/reasoning-panel.tsx"
+        language="tsx"
+        code={`import { openAIReasoningToThoughts } from "agentle-ui";
+import { ThoughtVisualizer } from "@/components/agentle/thought-visualizer";
+
+export function ReasoningPanel({ url }: { url: string }) {
+  return (
+    <ThoughtVisualizer
+      thoughts={() =>
+        (async function* () {
+          const res = await fetch(url);
+          if (!res.body) return;
+          yield* openAIReasoningToThoughts(res.body);
+        })()
+      }
+    />
+  );
+}`}
+      />
+
+      <AnchorHeading id="pollinations" level={2}>
+        Pollinations / delta.reasoning + content
+      </AnchorHeading>
+      <p>
+        Pollinations emits both <code>delta.content</code> and <code>delta.reasoning</code> in one SSE
+        stream. Use a <strong>single fetch</strong> and fan out deltas into two React state strings —
+        do not double-fetch or <code>tee()</code> the body (streams are single-consumption).
       </p>
       <CodeBlock
         filename="lib/pollinations-chat.tsx"
         language="tsx"
-        code={`import { openAIStreamToText } from "agentle-ui";
+        code={`import { useEffect, useState } from "react";
+import { parseSSE } from "agentle-ui";
 import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
+import { ThoughtVisualizer } from "@/components/agentle/thought-visualizer";
 
-function createPollinationsStream(prompt: string) {
-  return (async function* () {
-    const res = await fetch("https://text.pollinations.ai/openai", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "openai",
-        messages: [{ role: "user", content: prompt }],
-        stream: true,
-      }),
-    });
-    if (!res.body) return;
-    yield* openAIStreamToText(res.body, { field: "content" });
-  })();
-}
-
-function createPollinationsReasoningStream(prompt: string) {
-  return (async function* () {
-    const res = await fetch("https://text.pollinations.ai/openai", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "openai",
-        messages: [{ role: "user", content: prompt }],
-        stream: true,
-      }),
-    });
-    if (!res.body) return;
-    yield* openAIStreamToText(res.body, { field: "reasoning" });
-  })();
+function extractDelta(data: string, field: "content" | "reasoning"): string {
+  if (data === "[DONE]") return "";
+  try {
+    const parsed = JSON.parse(data) as {
+      choices?: Array<{ delta?: Record<string, unknown> }>;
+    };
+    const value = parsed.choices?.[0]?.delta?.[field];
+    return typeof value === "string" ? value : "";
+  } catch {
+    return "";
+  }
 }
 
 export function PollinationsAnswer({ prompt }: { prompt: string }) {
+  const [answer, setAnswer] = useState("");
+  const [reasoning, setReasoning] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAnswer("");
+    setReasoning("");
+    setDone(false);
+
+    void (async () => {
+      const res = await fetch("https://text.pollinations.ai/openai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai",
+          messages: [{ role: "user", content: prompt }],
+          stream: true,
+        }),
+      });
+      if (!res.body || cancelled) return;
+
+      for await (const message of parseSSE(res.body)) {
+        if (cancelled) return;
+        const content = extractDelta(message.data, "content");
+        const thought = extractDelta(message.data, "reasoning");
+        if (content) setAnswer((current) => current + content);
+        if (thought) setReasoning((current) => current + thought);
+      }
+
+      if (!cancelled) setDone(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [prompt]);
+
   return (
     <>
-      <section aria-label="Reasoning">
-        <MarkdownStabilizer content={() => createPollinationsReasoningStream(prompt)} />
-      </section>
-      <MarkdownStabilizer content={() => createPollinationsStream(prompt)} />
+      {reasoning ? (
+        <section aria-label="Reasoning">
+          <ThoughtVisualizer
+            thoughts={[
+              {
+                id: "reasoning",
+                label: done ? "Thought process" : "Thinking…",
+                status: done ? "complete" : "active",
+                detail: reasoning,
+              },
+            ]}
+          />
+        </section>
+      ) : null}
+      <MarkdownStabilizer content={answer} isComplete={done} />
     </>
   );
 }`}
       />
-      <Callout variant="tip" title="Structured thoughts need NDJSON">
-        For collapsible step UI, emit NDJSON lines matching{" "}
+      <Callout variant="tip" title="Structured steps vs free-text reasoning">
+        For multi-step agent UI, emit NDJSON lines matching{" "}
         <code>{"{ id, label, status, detail? }"}</code> and pass them to{" "}
-        <code>useThoughtStream</code>. Raw <code>delta.reasoning</code> strings are better rendered
-        as markdown via <code>useStabilizedMarkdown</code>.
+        <code>useThoughtStream</code>. For OpenAI-style <code>delta.reasoning</code> tokens, use{" "}
+        <code>openAIReasoningToThoughts</code> or the fan-out pattern above.
       </Callout>
 
       <AnchorHeading id="tool-calls" level={2}>

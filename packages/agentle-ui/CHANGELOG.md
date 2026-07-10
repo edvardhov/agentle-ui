@@ -1,5 +1,11 @@
 # agentle-ui
 
+## 0.4.0
+
+### Minor Changes
+
+- Add reasoning-to-thought adapters (`textToThoughtStep`, `openAIReasoningToThoughts`) and single-fetch fan-out recipes.
+
 ## 0.3.0
 
 ### Minor Changes

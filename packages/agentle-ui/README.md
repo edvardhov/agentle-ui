@@ -123,6 +123,7 @@ Available components: `markdown-stabilizer`, `thought-visualizer`, `action-card`
 Also exported for custom integrations:
 
 - `parseSSE`, `openAIStreamToText` — parse OpenAI-compatible SSE and extract `delta.content` or `delta.reasoning`
+- `textToThoughtStep`, `openAIReasoningToThoughts` — map free-text reasoning into a single collapsible ThoughtStep (NDJSON)
 - `collectStreamInput`, `collectStreamSource`, `getStreamInputKey`, `getStreamSourceKey`
 - `parseThoughtJsonLine`, `mergeThoughtSteps`, `buildThoughtSummary`, `getActiveThoughtStep`, `isThoughtStreamComplete`
 

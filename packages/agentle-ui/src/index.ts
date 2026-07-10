@@ -39,3 +39,8 @@ export {
 export { collectStreamInput, collectStreamSource, getStreamInputKey, getStreamSourceKey } from "./engines/stream-input";
 export { openAIStreamToText, parseSSE } from "./engines/sse";
 export type { OpenAIStreamToTextOptions, SSEMessage } from "./engines/sse";
+export { openAIReasoningToThoughts, textToThoughtStep } from "./engines/reasoning";
+export type {
+  OpenAIReasoningToThoughtsOptions,
+  TextToThoughtStepOptions,
+} from "./engines/reasoning";

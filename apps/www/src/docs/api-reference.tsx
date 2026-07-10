@@ -60,6 +60,18 @@ export function ApiReferencePage() {
               'Extract OpenAI-compatible delta fields (default "content", or "reasoning") from SSE.',
           },
           {
+            name: "textToThoughtStep",
+            type: "(source, options?) => AsyncIterable<string>",
+            description:
+              "Map a free-text token stream into NDJSON lines for one evolving ThoughtStep.",
+          },
+          {
+            name: "openAIReasoningToThoughts",
+            type: "(source, options?) => AsyncIterable<string>",
+            description:
+              "Extract delta.reasoning from SSE and emit NDJSON thought lines (active → complete).",
+          },
+          {
             name: "collectStreamSource",
             type: "(source) => Promise<string>",
             description: "Drain a StreamSource into a string.",
