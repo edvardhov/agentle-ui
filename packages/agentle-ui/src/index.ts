@@ -44,3 +44,4 @@ export type {
   OpenAIReasoningToThoughtsOptions,
   TextToThoughtStepOptions,
 } from "./engines/reasoning";
+export { splitReadableStream } from "./engines/split";

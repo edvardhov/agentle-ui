@@ -1,5 +1,11 @@
 # agentle-ui
 
+## 0.5.0
+
+### Minor Changes
+
+- Rewrite onboarding docs around three input shapes, add splitReadableStream helper, and ship dark-theme CSS variables in agentle.css.
+
 ## 0.4.0
 
 ### Minor Changes

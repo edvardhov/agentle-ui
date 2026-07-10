@@ -3,6 +3,7 @@ import { AnchorHeading } from "../components/docs/anchor-heading";
 import { Callout } from "../components/docs/callout";
 import { CodeBlock } from "../components/docs/code-block";
 import { Pill } from "../components/docs/pill";
+import { PropsTable } from "../components/docs/props-table";
 
 export function RecipesPage() {
   return (
@@ -20,6 +21,83 @@ export function RecipesPage() {
         For all four pillars wired together in one screen, see the{" "}
         <Link to="/example">Example chat</Link>.
       </Callout>
+
+      <AnchorHeading id="input-shapes" level={2}>
+        Three input shapes
+      </AnchorHeading>
+      <p>
+        The package contract is strings and structured steps — not raw SSE frames or provider SDKs.
+        Map your backend first, then pass the shape each hook expects.
+      </p>
+      <PropsTable
+        rows={[
+          {
+            name: "Answer markdown",
+            type: "MarkdownStabilizer / useStabilizedMarkdown",
+            description: "Growing string or StreamSource of text tokens",
+          },
+          {
+            name: "Thinking",
+            type: "ThoughtVisualizer / useThoughtStream",
+            description: "NDJSON thought lines or ThoughtStep[]",
+          },
+          {
+            name: "Tools",
+            type: "ActionCard / useActionState",
+            description: "AgentAction[] — app state, not a stream",
+          },
+        ]}
+      />
+
+      <Callout variant="info" title="Production streaming">
+        Prefer <code>isComplete</code> when your transport has a done signal (fetch complete, SSE
+        end, SDK done event). Use <code>settleMs</code> auto-settle only for firehose text with no
+        explicit end event. Stabilization is block-level layout safety — not ChatGPT-style character
+        typing.
+      </Callout>
+
+      <AnchorHeading id="any-backend" level={2}>
+        Any backend (string + isComplete)
+      </AnchorHeading>
+      <p>
+        The default path: accumulate tokens in your transport layer, pass a growing string, flip{" "}
+        <code>isComplete</code> when done.
+      </p>
+      <CodeBlock
+        filename="lib/streamed-answer.tsx"
+        language="tsx"
+        code={`import { useEffect, useState } from "react";
+import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
+
+export function StreamedAnswer({ url }: { url: string }) {
+  const [content, setContent] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setContent("");
+    setDone(false);
+
+    void (async () => {
+      const res = await fetch(url, { signal: controller.signal });
+      const reader = res.body?.getReader();
+      if (!reader) return;
+
+      const decoder = new TextDecoder();
+      while (true) {
+        const { value, done: eof } = await reader.read();
+        if (eof) break;
+        setContent((current) => current + decoder.decode(value, { stream: true }));
+      }
+      setDone(true);
+    })();
+
+    return () => controller.abort();
+  }, [url]);
+
+  return <MarkdownStabilizer content={content} isComplete={done} />;
+}`}
+      />
 
       <Callout variant="info" title="StrictMode and single-use streams">
         Async generators and <code>ReadableStream</code> bodies can only be consumed once. In React
@@ -212,6 +290,43 @@ export function ReasoningPanel({ url }: { url: string }) {
       }
     />
   );
+}`}
+      />
+
+      <AnchorHeading id="split-stream" level={2}>
+        Dual-channel split (splitReadableStream)
+      </AnchorHeading>
+      <p>
+        When one HTTP body carries multiple channels (e.g. reasoning + content in the same SSE
+        stream), <code>splitReadableStream(body, 2)</code> fans out bytes via native{" "}
+        <code>tee()</code>. Use in a <strong>single owner</strong> — tee branches are
+        single-consumption. Do not attach two independently-remounting hooks to split branches under
+        StrictMode. For hook dual-channel UI, prefer the{" "}
+        <a href="#pollinations">single-fetch fan-out recipe</a> below.
+      </p>
+      <CodeBlock
+        filename="lib/split-sse.ts"
+        language="ts"
+        code={`import { openAIStreamToText, splitReadableStream } from "agentle-ui";
+
+async function consumeDualChannel(url: string) {
+  const res = await fetch(url);
+  if (!res.body) return { answer: "", reasoning: "" };
+
+  const [reasoningBody, contentBody] = splitReadableStream(res.body, 2);
+
+  const [reasoning, answer] = await Promise.all([
+    collectText(openAIStreamToText(reasoningBody, { field: "reasoning" })),
+    collectText(openAIStreamToText(contentBody, { field: "content" })),
+  ]);
+
+  return { answer, reasoning };
+}
+
+async function collectText(source: AsyncIterable<string>) {
+  let text = "";
+  for await (const chunk of source) text += chunk;
+  return text;
 }`}
       />
 

@@ -72,6 +72,12 @@ export function ApiReferencePage() {
               "Extract delta.reasoning from SSE and emit NDJSON thought lines (active → complete).",
           },
           {
+            name: "splitReadableStream",
+            type: "(source, branches?) => ReadableStream[]",
+            description:
+              "Vendor-neutral ReadableStream fan-out via native tee(). Single-owner use only.",
+          },
+          {
             name: "collectStreamSource",
             type: "(source) => Promise<string>",
             description: "Drain a StreamSource into a string.",

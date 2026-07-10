@@ -16,6 +16,7 @@
 
 <p align="center">
   Headless React hooks and copy-paste templates for AI-native presentation.<br />
+  Stabilizes streaming markdown into stable blocks — not a typewriter or character-stream effect.<br />
   Zero vendor lock-in — accepts raw strings or streams from any backend.
 </p>
 
@@ -53,9 +54,19 @@ export function Answer({ content }: { content: string }) {
 
 The CLI copies `MarkdownStabilizer` plus `agentle.css`. Import the CSS once in your app entry or layout.
 
-## Streaming from fetch
+## Three input shapes
 
-Growing strings are **auto-detected** as live streams — incomplete blocks stay pending until tokens stop arriving.
+| Concern | Component / hook | What you pass |
+|--------|------------------|---------------|
+| Answer markdown | `MarkdownStabilizer` / `useStabilizedMarkdown` | Growing string or `StreamSource` of text |
+| Thinking | `ThoughtVisualizer` / `useThoughtStream` | NDJSON thought lines or `ThoughtStep[]` |
+| Tools | `ActionCard` / `useActionState` | `AgentAction[]` (app state, not a stream) |
+
+Raw `delta.reasoning` tokens are not thought steps. SSE frames are not markdown. Map your backend to strings or NDJSON, or use the optional adapters below.
+
+## Streaming (any backend)
+
+Accumulate tokens into a growing string in your transport layer. Pass `isComplete` when your backend signals done — this is the production path.
 
 ```tsx
 import { useState, useEffect } from "react";
@@ -63,9 +74,12 @@ import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
 
 export function StreamedAnswer({ url }: { url: string }) {
   const [content, setContent] = useState("");
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
+    setContent("");
+    setDone(false);
 
     void (async () => {
       const response = await fetch(url, { signal: controller.signal });
@@ -74,29 +88,62 @@ export function StreamedAnswer({ url }: { url: string }) {
 
       const decoder = new TextDecoder();
       while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+        const { value, done: eof } = await reader.read();
+        if (eof) break;
         setContent((current) => current + decoder.decode(value, { stream: true }));
       }
+      setDone(true);
     })();
 
     return () => controller.abort();
   }, [url]);
 
-  return <MarkdownStabilizer content={content} />;
+  return <MarkdownStabilizer content={content} isComplete={done} />;
 }
 ```
 
-For manual control, pass `isComplete` or tune `settleMs` on the headless hook:
+**Production guidance**
+
+- Prefer **`isComplete`** when your transport has a done signal (SSE end, fetch complete, SDK `done` event).
+- Use **`settleMs`** auto-settle only for firehose text with no explicit end event (demos, replays).
+- Pass a **`StreamSource` factory** (`() => stream`) for live async iterables — creates a fresh stream per subscription (StrictMode-safe).
+
+Headless control:
 
 ```tsx
 import { useStabilizedMarkdown } from "agentle-ui";
 
 const { renderedBlocks, pendingBlocks, isStreaming } = useStabilizedMarkdown(content, {
-  isComplete: false, // set true when your backend signals done
-  settleMs: 32,      // auto-detect idle window (defaults to debounceMs)
+  isComplete: done,
 });
 ```
+
+## OpenAI-compatible SSE (optional adapters)
+
+Most real backends stream SSE JSON, not plain text. Use `parseSSE` / `openAIStreamToText` to extract text tokens first:
+
+```tsx
+import { openAIStreamToText } from "agentle-ui";
+import { MarkdownStabilizer } from "@/components/agentle/markdown-stabilizer";
+
+export function AnswerFromSSE({ url }: { url: string }) {
+  return (
+    <MarkdownStabilizer
+      content={() =>
+        (async function* () {
+          const res = await fetch(url);
+          if (!res.body) return;
+          yield* openAIStreamToText(res.body);
+        })()
+      }
+    />
+  );
+}
+```
+
+For free-text `delta.reasoning`, use **`textToThoughtStep`** (generic bridge) or **`openAIReasoningToThoughts`** (OpenAI SSE sugar) with `ThoughtVisualizer`.
+
+Dual-channel bodies (reasoning + content in one response): use **`splitReadableStream(body, 2)`** in a single owner effect, or route both deltas into two state strings in one fetch loop. Tee branches are single-consumption — do not attach two remounting hooks to split branches under StrictMode.
 
 ## Headless hooks
 
@@ -124,6 +171,7 @@ Also exported for custom integrations:
 
 - `parseSSE`, `openAIStreamToText` — parse OpenAI-compatible SSE and extract `delta.content` or `delta.reasoning`
 - `textToThoughtStep`, `openAIReasoningToThoughts` — map free-text reasoning into a single collapsible ThoughtStep (NDJSON)
+- `splitReadableStream` — vendor-neutral `ReadableStream` fan-out via native `tee()`
 - `collectStreamInput`, `collectStreamSource`, `getStreamInputKey`, `getStreamSourceKey`
 - `parseThoughtJsonLine`, `mergeThoughtSteps`, `buildThoughtSummary`, `getActiveThoughtStep`, `isThoughtStreamComplete`
 

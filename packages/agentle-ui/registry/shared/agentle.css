@@ -1,4 +1,5 @@
 :root {
+  /* Theming API: override these variables in your app or scope under .dark */
   --agentle-font: system-ui, -apple-system, sans-serif;
   --agentle-font-mono: ui-monospace, "Cascadia Code", monospace;
   --agentle-radius: 0.5rem;
@@ -16,6 +17,16 @@
   --agentle-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --agentle-duration: 200ms;
   --agentle-duration-slow: 400ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --agentle-bg: #18181b;
+    --agentle-bg-subtle: #27272a;
+    --agentle-text: #fafafa;
+    --agentle-text-muted: #a1a1aa;
+    --agentle-border: #3f3f46;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
